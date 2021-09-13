@@ -1,0 +1,313 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>NoSQL-Datenbanken - Kapitel 1 - Grundlagen</title>
+
+		<link rel="stylesheet" href="reveal.js/dist/reset.css">
+		<link rel="stylesheet" href="reveal.js/dist/reveal.css">
+
+        <link rel="stylesheet" href="src/slides.css">
+        <link rel="stylesheet" href="src/sql.css">
+
+		<link rel="stylesheet" href="src/layout.css">
+        <link rel="stylesheet" href="lib/joint.min.css" />
+        <link rel="stylesheet" href="src/erd.css" />
+        <link rel="stylesheet" href="src/poll.css" />
+
+		<!-- Theme used for syntax highlighting of code -->
+		<link rel="stylesheet" href="src/rainbow.css">
+
+        <!--<script defer src="lib/fontawesome.all.min.js"/>-->
+        <link href="lib/fontawesome.all.min.css" rel="stylesheet">
+        <style> .reveal i.fa { font-family:FontAwesome; font-style: normal; } </style>
+	</head>
+	<body>
+		<div class="reveal">
+            <div id="header"></div>
+            <div id="footer"></div>
+			<div class="slides">
+                <section>
+                    <h4 style="text-align:center"><b>Prof. Dr.-Ing. Johannes Schildgen</b><br>
+                    <a href="mailto:johannes.schildgen@oth-regensburg.de">johannes.schildgen@oth-regensburg.de</a></h4>
+                    <h2>NoSQL-Datenbanken</h2>
+                    <h4 style="text-align:center">&nbsp;</h4>
+                    <h3>Kapitel 1: Grundlagen</h3>
+                    <h4 style="text-align:center">&nbsp;<br>&nbsp;</h4>
+                    <img src="img/ccby.png" height="60px" style="position: absolute; left:0px; border:0; bottom:-160px;">
+                    <img src="img/oth.png" height="60px" style="position: absolute; right:0px; border:0; bottom:-160px; box-shadow:none">
+                </section>
+                <section>
+								<h2>Vorlesungsbetrieb</h2>
+								<div style="position: absolute; top: 120px; right:50px; font-size:230px"><!--<i class="fas fa-university green">--><i class="fab fa-youtube green"></i></div>
+                <h4>Vorlesung (über YouTube Live)</h4>
+                <ul>
+                    <li>Mo., 2021-10-{04,11} 15:30</li>
+                    <li>Do. ab 2021-10-14 8:15 Uhr</li>
+                </ul>
+                <br>
+                
+                <h4 class="fragment" data-fragment-index="1">Übung (Zoom-Einzelslots)</h4>
+                <ul class="fragment" data-fragment-index="1">
+                    <li>Mo., ab 2021-10-18 15:30</li>
+                </ul>
+                <br>
+                
+                <h4 class="fragment" data-fragment-index="2">Präsentationen (über Zoom)</h4>
+                <ul class="fragment" data-fragment-index="2">
+                    <li>Do., ab 2021-12-09 8:15</li>
+                    <li>Mo., ab 2021-12-13 15:30</li>
+                </ul>
+								</section>
+
+								<section>
+									<h3>Semesterübersicht</h3>
+									<div class="columns" style="font-size: 18pt;">
+										<div style="text-align: center;">
+											<h3 style="font-size: 90%; margin-bottom: 1mm;">Oktober 2021</h3>
+											<table >
+												<tbody>
+													<tr>
+														<td>Mo</td>
+														<td>Di</td>
+														<td>Mi</td>
+														<td>Do</td>
+														<td>Fr</td>
+													</tr>
+													<tr>
+														<td class="sl-block-content red">4</td>
+														<td>5</td>
+														<td>6</td>
+														<td>7</td>
+														<td>8</td>
+													</tr>
+													<tr>
+														<td class="sl-block-content red">11</td>
+														<td>12</td>
+														<td>13</td>
+														<td class="sl-block-content red">14</td>
+														<td>15</td>
+													</tr>
+													<tr>
+														<td class="sl-block-content blue">18</td>
+														<td>19</td>
+														<td>20</td>
+														<td class="sl-block-content red">21</td>
+														<td>22</td>
+													</tr>
+													<tr>
+														<td class="sl-block-content blue">25</td>
+														<td>26</td>
+														<td>27</td>
+														<td class="sl-block-content red">28</td>
+														<td>29</td>
+													</tr>
+												</tbody>
+											</table>
+
+											<p></p>
+
+											<h3 style="font-size: 90%; margin-bottom: 1mm;">November 2021</h3>
+										<table >
+											<tbody>
+												<tr>
+													<td>Mo</td>
+													<td>Di</td>
+													<td>Mi</td>
+													<td>Do</td>
+													<td>Fr</td>
+												</tr>
+												<tr>
+													<td class="sl-block-content blue">1</td>
+													<td>2</td>
+													<td>3</td>
+													<td class="sl-block-content red">4</td>
+													<td>5</td>
+												</tr>
+												<tr>
+													<td class="sl-block-content blue">8</td>
+													<td>9</td>
+													<td>10</td>
+													<td class="sl-block-content red">11</td>
+													<td>12</td>
+												</tr>
+												<tr>
+													<td class="sl-block-content blue">15</td>
+													<td>16</td>
+													<td>17</td>
+													<td class="sl-block-content red">18</td>
+													<td>19</td>
+												</tr>
+												<tr>
+													<td class="sl-block-content blue">22</td>
+													<td>23</td>
+													<td>24</td>
+													<td class="sl-block-content red">25</td>
+													<td>26</td>
+												</tr>
+												<tr>
+													<td class="sl-block-content blue">29</td>
+													<td>30</td>
+													<td></td>
+													<td></td>
+													<td></td>
+												</tr>
+											</tbody>
+										</table>
+
+											
+										</div>
+									<div style="text-align: center;">
+										<h3 style="font-size: 90%; margin-bottom: 1mm;">Dezember 2021</h3>
+											<table >
+												<tbody>
+													<tr>
+														<td>Mo</td>
+														<td>Di</td>
+														<td>Mi</td>
+														<td>Do</td>
+														<td>Fr</td>
+													</tr>
+													<tr>
+														<td></td>
+														<td></td>
+														<td>1</td>
+														<td class="sl-block-content red">2</td>
+														<td>3</td>
+													</tr>
+													<tr>
+														<td class="sl-block-content blue">6</td>
+														<td>7</td>
+														<td>8</td>
+														<td class="sl-block-content green">9</td>
+														<td>10</td>
+													</tr>
+													<tr>
+														<td class="sl-block-content green">13</td>
+														<td>14</td>
+														<td>15</td>
+														<td class="sl-block-content green">16</td>
+														<td>17</td>
+													</tr>
+													<tr>
+														<td class="sl-block-content green">20</td>
+														<td>21</td>
+														<td>22</td>
+														<td class="sl-block-content green">23</td>
+														<td>24</td>
+													</tr>
+												</tbody>
+											</table>
+
+										<p></p>
+
+										<h3 style="font-size: 90%; margin-bottom: 1mm;">Januar 2022</h3>
+											<table >
+												<tr>
+													<td>Mo</td>
+													<td>Di</td>
+													<td>Mi</td>
+													<td>Do</td>
+													<td>Fr</td>
+												</tr>
+												<tr>
+													<td class="sl-block-content green">10</td>
+													<td>11</td>
+													<td>12</td>
+													<td class="sl-block-content green">13</td>
+													<td>14</td>
+												</tr>
+												<tr>
+													<td class="sl-block-content green">17</td>
+													<td>18</td>
+													<td>19</td>
+													<td class="sl-block-content green">20</td>
+													<td>21</td>
+												</tr>
+												</tbody>
+											</table>
+
+											<p></p>
+											<table style="border: 0;">
+											<tr><td class="sl-block-content red">Vorlesung</td></tr>
+											<tr><td class="sl-block-content blue">Übung</td></tr>
+											<tr><td class="sl-block-content green">Präsentation</td></tr>
+											</table>
+									</div>
+								</div>
+								</section>
+
+								<section>
+									<h3>Prüfung</h3>
+									<h4>Mündliche Prüfung</h4>
+									<ul class="small" style="margin-top: -4mm;">
+										<li>Inhalt: Alles aus Vorlesung, Übung und Präsentationen</li>
+										<li><b>Ca. 15 Minuten</b>, über Zoom</li>
+										<li>Note: [1.0, 1.3, 1.7, 2.0, 2.3, 2.7, 3.0, 3.3, 3.7, 4.0, 4.3, 5.0]</li>
+									</ul>
+									<h4 class="fragment" data-fragment-index="1" style="margin-top: 5mm;">Präsentationen (ist Prüfungsvoraussetzung)</h4>
+									<ul class="fragment small" data-fragment-index="1" style="width: 100%; margin-top: -4mm;">
+										<li>Wahl eines zu präsentierenden NoSQL-DBMS (im November): Redis, Riak, HBase, Cassandra, CouchDB, DynamoDB, Neo4J, Elasticsearch, ArangoDB</li>
+										<li>Auf <b>Deutsch oder Englisch</b>; Dauer: <b>90 Minuten</b> inkl. Live-Demo und Fragen</li>
+										<li>Im <b>Zweierteam</b> (jeder bekommt wenige Tage nach der Präsentation eigene Note)</li>
+										<li><b>Präsentationsfolien für alle bereitstellen</b> (Inhalte für alle prüfungsrelevant)</li>
+										<li>Note: +++, ++, +, o, -, --, --- (verbessert/-schlechtert Note um bis zu 3 Notenstufen)</li>
+									</ul>
+									<p class="fragment small" style="margin-top: 2mm;"><em>Kriterium für Bestanden: Mündl. Prüfungsnote &lt; 5 AND Endnote &le; 4 (beste Note: 1.0)</em></p>
+
+									<div class="poll fragment" style="bottom:-80px">
+										<h1>Franka hat in der mündlichen Prüfung eine 2.0 und in der Präsentation ein ++, was ist ihre Endnote?</h1>
+												<ul>
+														<li>1.0</li>
+														<li data-poll="correct">1.3</li>
+														<li>1.7</li>
+														<li>2.0</li>
+												</ul>
+										<h2>https://fraage.de</h2>
+									</div>
+
+									<aside class="notes">Beispiel: Peter hat in der mündlichen Prüfung eine 1.0, jedoch eine eher schwache Präsentation (-) gehalten. Seine Endnote ist 1.0+0.3 = 1.3. Ute hat in der mündlichen Prüfung eine 2.3, aber eine hervorragende Präsentation (+++) gehalten. Damit ist ihre Endnote ebenfalls eine 1.3 (2.3 - 1.0 = 1.3)</aside>
+									
+								</section>
+								
+								
+								
+                	
+
+			<section>
+							<h2>Zusammenfassung</h2>
+							<ul>
+								<li></li>
+							</ul>
+			</section>
+
+			</div>
+		</div>
+
+		<script src="reveal.js/dist/reveal.js"></script>
+		<script src="reveal.js/plugin/markdown/markdown.js"></script>
+		<script src="reveal.js/plugin/highlight/highlight.js"></script>
+		<script src="reveal.js/plugin/zoom/zoom.js"></script>
+		<script src="reveal.js/plugin/math/math.js"></script>
+		<script src="reveal.js/plugin/notes/notes.js"></script>
+		<script src="reveal.js/plugin/search/search.js"></script>
+        <script src="lib/jquery.js"></script>
+        <script src="lib/lodash.js"></script>
+        <script src="lib/backbone.js"></script>
+        <script src="lib/joint.min.js"></script>
+				<script src="lib/deflate.js"></script>
+
+		<script src="src/init_reveal.js"></script>
+
+        <script>
+        if(window.location.search.match( /print-pdf/gi )) {
+                document.getElementById('header').style="display:none";
+                document.getElementById('footer').style="display:none";
+        }
+        </script>
+
+
+	</body>
+</html>
