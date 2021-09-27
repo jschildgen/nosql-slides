@@ -4,5 +4,28 @@
 			"path": "."
 		}
 	],
-	"settings": {}
+	"settings": {
+		"cSpell.words": [
+			"Arango",
+			"Edlich",
+			"Franka",
+			"HDFS",
+			"LPOP",
+			"LPUSH",
+			"LRANGE",
+			"Mündl",
+			"othr",
+			"Präsentationsfolien",
+			"Riak",
+			"RPOP",
+			"RPUSH",
+			"Schemaevolutionen",
+			"schlechtert",
+			"skinparam",
+			"socialnetwork",
+			"stwno",
+			"Verteilbarkeit",
+			"Vorlesungsbetrieb"
+		]
+	}
 }

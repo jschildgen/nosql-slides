@@ -1,0 +1,201 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>NoSQL-Datenbanken - Kapitel 2 - MongoDB</title>
+
+		<link rel="stylesheet" href="reveal.js/dist/reset.css">
+		<link rel="stylesheet" href="reveal.js/dist/reveal.css">
+
+        <link rel="stylesheet" href="src/slides.css">
+        <link rel="stylesheet" href="src/sql.css">
+
+		<link rel="stylesheet" href="src/layout.css">
+        <link rel="stylesheet" href="lib/joint.min.css" />
+        <link rel="stylesheet" href="src/erd.css" />
+        <link rel="stylesheet" href="src/poll.css" />
+
+		<!-- Theme used for syntax highlighting of code -->
+		<link rel="stylesheet" href="src/rainbow.css">
+
+        <!--<script defer src="lib/fontawesome.all.min.js"/>-->
+        <link href="lib/fontawesome.all.min.css" rel="stylesheet">
+        <style> .reveal i.fa { font-family:FontAwesome; font-style: normal; } </style>
+	</head>
+	<body>
+		<div class="reveal">
+            <div id="header"></div>
+            <div id="footer"></div>
+			<div class="slides">
+                <section>
+                    <h4 style="text-align:center"><b>Prof. Dr.-Ing. Johannes Schildgen</b><br>
+                    <a href="mailto:johannes.schildgen@oth-regensburg.de">johannes.schildgen@oth-regensburg.de</a></h4>
+                    <h2>NoSQL-Datenbanken</h2>
+                    <h4 style="text-align:center">&nbsp;</h4>
+                    <h3>Kapitel 2: MongoDB</h3>
+                    <h4 style="text-align:center">&nbsp;<br>&nbsp;</h4>
+                    <img src="img/ccby.png" height="60px" style="position: absolute; left:0px; border:0; bottom:-160px;">
+                    <img src="img/oth.png" height="60px" style="position: absolute; right:0px; border:0; bottom:-160px; box-shadow:none">
+                </section>
+                
+								<section>
+									<h3>Ziel der Vorlesung</h3>
+									
+									<ul class="small">
+										<li>Konzepte von NoSQL-Datenbanken am Beispiel von MongoDB lernen
+											<ul>
+												<li>Datenmodellierung</li>
+												<li>Replikation, Sharding</li>
+												<li>Performance: Anfragepläne, Indexe, Profiling</li>
+												<li>Transaktionen: ACID vs. BASE, CAP-Theorem</li>
+											</ul><br>
+										</li>
+										<li class="fragment">Vorbereitung für die MongoDB Developer-Zertifizierung (freiwillig)
+											<img src="img/2/githubsdp-plus-mongodb.png" alt="GitHub Student Developer Pack" class="noborder" style="position: absolute; right: -0.1cm; top: 8.5cm; width: 8cm;">
+											<ul>
+												<li>Mongo Professional Certification</li>
+												<li>Vorlesungsinhalte = Zertifizierungsinhalte</li>
+												<li>Dauer: 90 Minuten, Multiple-Choice, online</li>
+												<li>Kosten: <strike>150 USD</strike> (kostenlos für Studierende: <a href="https://www.mongodb.com/students">mongodb.com/students</a>) </li>
+											</ul>
+										</li>
+									</ul>
+									<aside class="notes">Die Konzepte von NoSQL-Datenbanken werden im Rahmen der nun folgenden Vorlesungskapitel am Beispiel von MongoDB detailliert behandelt. Die Inhalte decken den kompletten Stoff ab, der in der MongoDB Developer-Zertifizierung abgefragt wird. Die Teilnahme und das Bestehen der Zertifizierungsprüfung ist unabhängig vom FWPM NoSQL-Datenbanken und keine Prüfungsvoraussetzung. MongoDB ist Teil des GitHub Student Developer Packs, sodass Studierende die Zertifizierung kostenlos mitmachen können: <a href="https://education.github.com/pack" target="_blank">https://education.github.com/pack</a></aside>
+								</section>
+
+								<section>
+									<h2><img src="img/1/mongodb.png" alt="MongoDB" class="noborder" style="width: 8cm; margin-bottom: -0.5cm;"></h2>
+									<p class="small">Die populärste NoSQL-Datenbank.</p>
+									<ul class="small">
+										<li>Erschienen: 2009 (aktuelle Version MongoDB 5)</li>
+										<li>Open-Source</li>
+										<li>Kategorie: Dokumentenorientierte Datenbank</li>
+										<li>Datenmodell: Sammlung JSON-ähnlicher Dokumente</li>
+									</ul>
+									<aside class="notes">Der Name MongoDB kommt vom Wort humongous (gigantisch) und verdeutlicht, dass die NoSQL-Datenbank für die Sammlung großer Datenmengen geeignet ist. MongoDB ist die am meisten verbreitete NoSQL-Datenbank.</aside>
+								</section>
+
+								<section>
+									<h3>Installation von MongoDB</h3>
+									<p class="small">Über Paketmanager:</p>
+									<pre><code class="sh">sudo apt install mongodb                # Ubuntu
+choco install mongodb                   # Windows (Chocolatey)</code></pre>
+
+<div class="fragment">
+									<p class="small">Manuelle Installation:</p>
+									<ul class="small">
+									<li><a href="https://www.mongodb.com/" target="_blank">mongodb.com</a> &rightarrow; Kostenlos testen &rightarrow; On-premises &rightarrow; MongoDB Community Server &rightarrow; Windows &rightarrow; msi / Ubuntu &rightarrow; shell (deb)</li>
+									</ul>
+</div>									
+<div class="fragment">
+									<p class="small">Ohne Installation:</p>
+									<ul class="small">
+										<li>zip- bzw. tgz-Datei herunterladen und entpacken</li>
+										</ul>
+</div>
+<div class="fragment">
+	<img src="img/2/MongoDB-Atlas-Logo-Black-hvfxuesorm.svg" alt="MongoDB Atlas" class="noborder" style="position: absolute; right: -0.1cm; top: 13cm; width: 8cm;">
+										<p class="small">In der Cloud (MongoDB Atlas):</p>
+										<ul class="small">
+											<li><a href="https://www.mongodb.com/de-de/cloud/atlas" target="_blank">https://www.mongodb.com/de-de/cloud/atlas</a></li>
+											<li>Automatisierte Einrichtung von Servern, Skalierung, Backups, ...</li>
+											<li>200 USD Startguthaben im GitHub Student Development Pack</li>
+											</ul>
+</div>
+								</section>
+
+								<section>
+									<h3>Programme</h3>
+									<h4><code>mongod</code></h4>
+									<p class="small" style="margin-top: -5mm;">MongoDB Server ("MongoDB Deamon")</p>
+									<pre style="width: 103%;"><code class="plaintext">./mongod --port 27017 --dbpath /data/db          # oder einfach ./mongod
+{..., "msg":"Waiting for connections","attr":{"port":27017,"ssl":"off"}}</code></pre>
+
+<div class="fragment">
+<h4><code>mongo</code></h4>
+									<p class="small" style="margin-top: -5mm;">Mongo Shell (Command-Line-Interface)</p>
+									<pre style="width: 103%;"><code class="plaintext">./mongo
+> db.produkte.insert({"bezeichnung":"Schokoriegel", "preis": 0.89})
+WriteResult({ "nInserted" : 1 })</code></pre>
+</div>
+
+<div class="fragment">
+<h4><code>mongos</code></h4>
+									<p class="small" style="margin-top: -5mm;">MongoDB Sharding Server (mehr dazu im Kapitel über Sharding)</p>
+</div>
+									<aside class="notes">Wählt man die Variante ohne Installation über die Zip-Datei, befindet sich in dieser ein bin-Ordner mit den Programmen mongod.exe, mongo.exe und mongos.exe (unter Windows). Diese sind auf der Kommandozeile auszuführen. Unter Windows z. B. in der PowerShell oder mit Cmder.</aside>
+								</section>
+
+								<section>
+									<h3>JSON (JavaScript Object Notation)</h3>
+									<p class="small">6 JSON-Datentypen:</p>
+									<table class="small">
+										<tbody>
+											<tr><td>String</td><td><code>"hallo"</code></td></tr>
+											<tr><td>Zahl</td><td><code>3.5</code></td></tr>
+											<tr><td>Boolean</td><td><code>true</code></td></tr>
+											<tr><td>Objekt (Dokument)</td><td><code>{"a":5, "b":10}</code></td></tr>
+											<tr><td>Array</td><td><code>[11,21,"Hallo",false]</code></td></tr>
+											<tr><td>Null</td><td><code>null</code></td></tr>
+										</tbody>
+									</table>
+
+									<pre><code class="json">{"name":"Ute", "admin": true, "kinder": [], "job": null,
+ "adressen": [ {"strasse":"Bergstr.", "hausnr": 25},
+               {"strasse":"Hauptstr.", "hausnr": 17}] }</code></pre>
+							 <aside class="notes">Arrays können beliebige Elemente beliebigen Typs besitzen. Objekte bestehen aus Feld-Wert-Paaren. Feldnamen sind innerhalb eines Objekts eindeutig, Werte können von einem beliebigen Typen sein. MongoDB verwendet neben den hier gezeigten 6 JSON-Datentypen noch ein Paar weitere (für Datum, Binärdaten, Timestamps, reguläre Ausdrücke, ...)</aside>
+								</section>
+
+								<section>
+									<h2>BSON</h2>
+									<p class="small">Binary JSON</p>
+									<p class="small">Internes Speicherformat, was schnellere Suchen auf Dokumenten ermöglicht.</p>
+									<pre><code class="javascript">{ "_id": 17, "bezeichnung": "Schokoriegel" }</code></pre>
+									<table class="small">
+										<tr><td>length</td><td>type</td><td>field</td><td>value</td><td>type</td><td>field</td><td>length</td><td>value</td><td>EOD</td></tr>
+										<tr style="font-family: monospace; font-size: 16pt;"><td>45</td><td>16</td><td>_id\0</td><td>17</td><td>2</td><td>bezeichnung\0</td><td>12</td><td>Schokoriegel\0</td><td>\0</td></tr>
+										<tr><td>4 Bytes</td><td>1</td><td>4</td><td>4</td><td>1</td><td>12</td><td>4</td><td>13</td><td>1</td></tr>
+									</table>
+									<div class="poll fragment fade-in-then-out" style="top:10px; height: 9.5cm;" data-fragment-index="1">
+										<h1>Wie viel Prozent mehr oder weniger Platz benötigt die BSON-Repräsentation im vergleich zum JSON-String?</h1>
+												<ul>
+														<li>27% weniger</li>
+														<li data-poll="correct">same</li>
+														<li>11% mehr</li>
+												</ul>
+										<h2>https://fraage.de</h2>
+									</div>
+					
+									<aside class="notes">BSON ist ein von MongoDB eingeführtes Speicherformat. In MongoDB werden Dokumente nämlich nicht als JSON-Strings abgespeichert, sondern in einer binären Form, wie diese Folie zeigt. Dies macht schnellere Suchen möglich. Das Längenfeld ganz am Anfang ist nützlich, um ein kompletten Dokument vollständig zu überspringen und direkt zum nächsten Dokument zu springen. Das gleiche gilt für die Längenangaben von String-Feldern. Mit dieser Info kann schnell zum nächsten Attribut gesprungen werden.</aside>
+								</section>
+
+			</div>
+		</div>
+
+		<script src="reveal.js/dist/reveal.js"></script>
+		<script src="reveal.js/plugin/markdown/markdown.js"></script>
+		<script src="reveal.js/plugin/highlight/highlight.js"></script>
+		<script src="reveal.js/plugin/zoom/zoom.js"></script>
+		<script src="reveal.js/plugin/math/math.js"></script>
+		<script src="reveal.js/plugin/notes/notes.js"></script>
+		<script src="reveal.js/plugin/search/search.js"></script>
+        <script src="lib/jquery.js"></script>
+        <script src="lib/lodash.js"></script>
+        <script src="lib/backbone.js"></script>
+        <script src="lib/joint.min.js"></script>
+				<script src="lib/deflate.js"></script>
+
+		<script src="src/init_reveal.js"></script>
+
+        <script>
+        if(window.location.search.match( /print-pdf/gi )) {
+                document.getElementById('header').style="display:none";
+                document.getElementById('footer').style="display:none";
+        }
+        </script>
+
+
+	</body>
+</html>

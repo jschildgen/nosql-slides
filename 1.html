@@ -273,15 +273,531 @@
 								</section>
 								
 								
-								
-                	
-
 			<section>
-							<h2>Zusammenfassung</h2>
-							<ul>
-								<li></li>
-							</ul>
-			</section>
+				<h3>Inhalte der Vorlesung</h3>
+				<ul class="small">
+					<li>Wie meistern NoSQL-DBs Big-Data-Herausforderungen?</li>
+					<li>NoSQL-Datenmodellierung</li>
+					<li>NoSQL-Anfragesprachen</li>
+					<li>ACID vs. BASE: Eventual Consistency, ...</li>
+					<li>Replikation</li>
+					<li>Sharding (Partitionierung)</li>
+					<li>Indexe</li>
+					<li>Monitoring</li>
+					<li>Transaktionen</li>
+					<li>Datenanalysen</li>
+				</ul>
+				<p>... am Beispiel von 	<img src="img/1/mongodb.png" alt="MongoDB" class="noborder" style="vertical-align:text-bottom; margin-bottom: 0mm;"></p>
+				<p class="small">Danach: Ihre Präsentationen über Redis, Riak, HBase, Cassandra, CouchDB, DynamoDB, Neo4J, Elasticsearch, ArangoDB</p>
+			</section>					
+                	
+			<section>
+				<h2>Literatur</h2>
+				<ul style="font-size:26pt">
+						<li><em>S. Edlich</em> <br>NoSQL</li>
+						<li><em>L. Wiese</em><br>Advanced Data Management.</li>
+						<li><em>L. Perkins</em><br>Seven Databases in Seven Weeks</li>
+						<li><em>J. Schildgen</em><br>MongoDB kompakt</li>
+				</ul>
+				<div style="position: absolute; top: 125px; right:180px;"><img src="img/1/nosql_edlich.jpg" style="height:220px;border:0"></div>
+				<div style="position: absolute; top: 125px; right:0px;"><img src="img/1/datamanagement_wiese.jpg" style="height:220px;border:0"></div>
+				<div style="position: absolute; top: 375px; right:180px;"><img src="img/1/7databases.jpg" style="height:220px;border:0"></div>
+				<div style="position: absolute; top: 375px; right:0px;"><img src="img/1/mongodb_kompakt.jpg" style="height:220px;border:0"></div>
+				</section>
+				<section>
+					<div class="columns">
+						<div><img src="img/1/nosql_cartoon1.png" alt="Geek and Poke" class="noborder" style="height: 16cm;"></div>
+						<div class="fragment"><img src="img/1/nosql_cartoon2.png" alt="Geek and Poke" class="noborder" style="height: 16cm;"></div>
+					</div>
+					
+						<p style="font-size: smaller; margin-top: -4mm;">Quelle: <a href="https://geek-and-poke.com/">https://geek-and-poke.com</a></p>
+				</section>
+
+				<section>
+					<h3>Datenbank-Geschichte <span style="font-size: 80%;">(in No-Nation ;-)</span></h3>
+					<p class="fragment">1970: NoSQL - We have no SQL</p>
+					<p class="fragment">1980: NoSQL - Know SQL</p>
+					<p class="fragment">2000: NoSQL - No SQL!</p>
+					<p class="fragment">2005: <b>NoSQL - Not only SQL</b></p>
+					<p class="fragment">2013: No, SQL!</p>
+					<aside class="notes">NoSQL steht für &quot;Not only SQL&quot;.<br>Mittlerweile wurden viele Vorteile von NoSQL-Datenbanken auch zurück in die relationale Welt übertragen, zum Beispiel Erweiterungen für SQL/JSON.</aside>
+				</section>
+
+				<section>
+					<h3><span  style="font-size: 80%;">Relationale Datenbankmanagementsysteme</span></h3>
+					<span data-sql-query="SELECT * FROM hersteller" data-sql-pk="firma"></span>
+					<aside class="notes">Relationale Datenbanken bestehen aus Tabellen. Tabellen haben zuvor festgelegte Spalten mit festen Datentypen.</aside>
+				</section>
+
+				<section>
+					<h3>SQL</h3>
+					<pre><code class="sql" contenteditable>SELECT * FROM hersteller WHERE land = 'Italien'</code></pre>
+					<span class="sqlresult"></span>
+
+					<div class="fragment">
+						<p>DDL: Data Definition Language</p>
+					<pre><code class="sql" contenteditable>CREATE TABLE produkte (
+ produktnummer INT PRIMARY KEY, 
+ bezeichnung VARCHAR(100) NOT NULL, preis DECIMAL(9,2), 
+ hersteller VARCHAR(50) REFERENCES hersteller(firma));</code></pre>
+					</div>
+					<aside class="notes">SQL wird als Anfragesprache auf relationalen Datenbanken und deren strukturierten Daten verwendet. Die hier stehende Anfrage liefert alle Hersteller aus Italien. Die Anwendung iteriert über die Ergebnismenge (Result Set), die aus 0 oder mehr Tupeln bestehen kann.​<br>
+Bevor Tabellendaten angefragt und modifiziert werden können, muss ein Tabellenschema angelegt werden. Die Spalte <code>produkte.hersteller</code> ist ein Fremdschlüssel auf den Primärschlüssel der Tabelle <code>hersteller</code> (<code>hersteller.firma</code>). Das heißt, dass die Spalte <code>hersteller</code> nur Werte beinhalten darf, die in der Tabelle <code>hersteller</code> in der Spalte <code>firma</code> präsent sind. Wichtig ist, dass die Datentypen (hier <code>VARCHAR(50)</code>) übereinstimmen.​</aside>
+				</section>
+
+				<section>
+					<h3>SQL: Joins</h3>
+					<pre><code class="sql" contenteditable>SELECT p.bezeichnung, p.hersteller, h.land
+FROM produkte p JOIN hersteller h ON p.hersteller = h.firma</code></pre>
+<span class="sqlresult"></span>
+
+<aside class="notes">Join = Verbund. Dieser sogenannte innere Verbund ist verlustbehaftet. Das heißt, Produkte und Hersteller, die keinen Joinpartner finden, sind nicht Teil des Ergebnisses. Beispielsweise taucht hier nicht das Produkt Katzenfutter auf, weil es den Hersteller <code>NULL</code> hat. Der Hersteller Holzkopf taucht hier nicht auf, weil kein Produkt von diesem Hersteller ist. Die Katzenfutter- und Holzkopf-Zeilen finden also beide keinen Join-Partner in der jeweils anderen Tabelle.​</aside>
+				</section>
+
+				<section>
+					<h3>Schwächen relationaler DBMS</h3>
+					<ul class="small" style="margin-bottom: 1cm;"><li><b>Inadäquate Datenrepräsentation</b>: "Quetschen" ins relationale Modell</li></ul>
+					<div class="columns">
+						<div><div class="erd" style="margin-top:0mm; width: 350px;">
+							[[
+							 { _e: "Produkte", pos: [30, 100],
+								 attributes: [
+									{ _a:"Produktnr", pos: [15, 25], options:["primary"] },
+									{ _a:"Bezeichnung", pos: [134, 25] },
+									{ _a:"Preis", pos: [200, 106] }
+								 ]
+							 },
+							 { _e: "Hersteller", pos: [30, 304],
+								 attributes: [
+									{ _a:"Firma", pos: [200, 280], options:["primary"] },
+									{ _a:"Land", pos: [200, 345] }
+								 ]
+							 }
+							],
+							[
+							 { _r: "sind von",
+								 _e: ["Produkte", "Hersteller"],
+								 card: ["N", "1"]      }
+							]]
+													</div></div>
+						<div><span data-sql-query="select * from produkte where hersteller = 'Calgonte'" data-sql-pk="produktnr"></span>
+						<br><span data-sql-query="select * from hersteller where firma = 'Calgonte'" data-sql-pk="firma"></span></div>
+					</div>
+					<aside class="notes">(Aus WIESE, Lena. Advanced Data Management. 2015. Kapitel 3)<br>
+Daten werden in das relationale Schema "gequetscht". Daten, die eigentlich zusammen gehören, werden mittels Fremdschlüsselbeziehung in mehrere Tabellen aufgeteilt (Normalisierung) und in der Anwendung wieder über Join-Operationen verbunden (Denormalisierung).</aside>
+				</section>
+
+				<section>
+					<h3>Schwächen relationaler DBMS</h3>
+					<ul class="small"><li><b>Homogenität</b>
+					<ul style="margin-bottom: 5mm;">
+						<li>Horizontale Homogenität: Jede Zeile besteht aus den gleichen Spalten</li>
+						<li>Vertikale Homogenität: In einer Spalte haben alle Werte den gleichen Typ</li>
+					</ul></li></ul>
+					<span data-sql-query="select * from produkte WHERE produktnr <= 88"></span>
+
+					<aside class="notes">Horizontale Homogenität: Jede Zeile in der Tabelle hat die Spalten der Tabelle (hier: <code>produktnr, bezeichnung, preis, hersteller</code>). Soll eine zusätzliche hinzugefügt werden, hat jede Zeile diese neue Spalte. Auf diese Art können sehr viele NULL-Werte entstehen (Sparse Data).​<br>
+Vertikale Homogenität: Innerhalb einer Spalte haben alle Zeilen den gleichen vorher festgelegten Datentyp, z. B. <code>DECIMAL(9,2)</code> als Datentyp der Spalte <code>preis</code>​.</aside>
+					</section>
+
+					<section>
+						<h3>Schwächen relationaler DBMS</h3>
+						<ul class="small">
+							<li>Optimiert für: oft lesen, selten ändern</li>
+							<li class="fragment">Deklarativer Zugriff: Mächtige Sprache SQL</li>
+							<li class="fragment">Optimiert für kurze Transaktionen</li>
+							<li class="fragment">Schwierige Verteilbarkeit auf mehrere Rechner</li>
+							<li class="fragment">Fixe Schemas, Schema-Änderungen teuer</li>
+						</ul>
+
+						<aside class="notes">Relationale Datenbanken sind meist dafür ausgelegt, dass viele Lese- und wenig Schreibanfragen gestellt werden.​<br>
+Die deklarative Anfragesprache SQL ist zwar sehr mächtig, aber oft wären einfachere Put/Get-APIs wünschenswert. Außerdem ist SQL nur für relationale Datenbanken gut geeignet, für XML eignen sich Pfadausdrücke besser, etc.​<br>
+Um die ACID-Eigenschaften bei Transaktionen zu gewährleisten, sind Sperrverfahren nötig. Damit die Sperren schnell wieder freigegeben werden können, sollten Transaktionen daher möglichst kurz sein. Wünschenswert wäre eine Unterstützung für langdauernde Transaktionen, z.B. für tägliche Analyseaufgaben oder Datentransformationen.​<br>
+Tabellen relationaler Datenbanksysteme lassen sich schlecht auf mehrere Rechenknoten verteilen. Die meisten RDBMS laufen auf einer einzelnen Maschine. Vor allem Join-Operatoren sind kostenintensiv in verteilten Systemen, da viele Daten über das Netzwerk transportiert werden müssen.​<br>
+Schemaevolutionen wie z.B. das Hinzufügen von Spalten ist sehr teuer, da sie meist eine Reorganisation der Daten verursachen.​</aside>
+					</section>
+
+					<section>
+						<h3>Neue Herausforderungen</h3>
+						<ul class="small">
+							<li>Komplexe Datenstrukturen:<br>Unstrukturierte und semi-strukturierte Daten, Graphen, ...</li>
+							<li style="margin-top:2cm">Sparse Data
+								<span data-sql-query="SELECT produktnr, bezeichnung, preis, hersteller, NULL AS verlag, 80 AS gewicht, NULL AS dauer, NULL AS farbe, NULL AS stromverbrauch FROM produkte WHERE produktnr=17"></span>
+							</li>
+							<li style="margin-top:3mm">Schema-Unabhängigkeit</li>
+							<li style="margin-top:1mm">Häufige Schema-Anpassungen</li>
+							<li style="margin-top:1mm">Skalierbarkeit</li>
+							<li style="margin-top:1mm">Big Data</li>
+
+							<div class="small" style="position: absolute; top: 9.4cm; left: 12.5cm;">
+								<code class="json">{<br>&nbsp;"produktnr":17,<br>&nbsp;"bezeichnung":"Schokoriegel",<br>&nbsp;"hersteller":"Monsterfood",<br>&nbsp;"gewicht": {"wert":80, "einheit":"g"}<br>}</code></li></div>
+								
+						</ul>
+						<img style="width:5cm; position: absolute; right: 1cm; top: 2cm" uml='skinparam roundCorner 25
+
+			object "Peter" as v1 {
+			}
+			
+			object "Franka" as v2 {
+			}
+			
+			object "Ute" as v3 {
+			}
+			
+			object "Jochen" as v4 {
+			}
+			
+			v1 --> v3 
+			v2 --> v3
+			v2 --> v4
+			'>
+
+			<aside class="notes">Sparse Data: Es kommt vor, dass viele Datenwerte nicht vorhanden oder unbekannt sind. In einem festen Schema würde dies in einer hohen Spaltenanzahl und sehr vielen NULL-Werten resultieren. Ein flexibles Schema erlaubt es, Daten von beliebiger Gestalt (Attribute, Datentypen, Schachtelungen) abzuspeichern, ohne vorher das Schema festlegen zu müssen. In der rechts unten dargestellten JSON-Repräsentation können andere Produkte auch ganz andere Attribute besitzen.​</aside>
+					</section>
+
+
+					<section>
+						<h2>Big Data</h2>
+
+						<div class="columns">
+							<div>
+								<h4 class="fragment" data-fragment-index="2">4 Vs</h4>
+								<ul class="fragment" data-fragment-index="2">
+									<li>Volume</li>
+									<li>Velocity</li>
+									<li>Variety</li>
+									<li>Veracity</li>
+								</ul>
+							</div>
+							<div class="fragment" data-fragment-index="3">
+								<img src="img/1/Big_Data.png" alt="Big Data" class="noborder">
+								<p style="font-size: small; margin-top: -10mm;"><a href="https://commons.wikimedia.org/wiki/File:Big_Data.png" target="_blank" style="color:black">https://commons.wikimedia.org/wiki/File:Big_Data.png</a></p>
+							</div>
+						</div>
+
+						<div class="poll fragment fade-in-then-out" style="bottom:-120px" data-fragment-index="1">
+							<h1>Ab wann sind Daten Big Data?</h1>
+									<ul>
+											<li>&gt; 1 GB</li>
+											<li>&gt; 1 TB</li>
+											<li>&gt; 1 EB</li>
+											<li data-poll="correct">Keine Ahnung</li>
+									</ul>
+							<h2>https://fraage.de</h2>
+						</div>
+
+						<aside class="notes">Big Data wird häufig über 4 Vs definiert (manchmal auch 3 Vs, 5Vs, ...). Big Data ist groß (<b>Volume</b>), wächst mit schneller Geschwindigkeit (<b>Velocity</b>), hat heterogene Strukturen (<b>Variety</b>; strukturiert, semi-strukturiert, unstrukturiert, Multi-Media-Daten), und der Informationsgehalt in Big Data ist oft unklar oder unglaubwürdig (<b>Veracity</b>).</aside>
+					</section>
+
+					<section>
+						<img src="img/1/4Vs.jpg" alt="4Vs" class="stretch noborder">
+						<p style="font-size: small; margin-top: -5mm;"><a href="https://www.flickr.com/photos/84593672@N05/9427663067/in/photostream/" target="_blank" style="color:black">https://www.flickr.com/photos/84593672@N05/9427663067/in/photostream/</a></p>
+					</section>
+
+					<section>
+						<img src="img/1/internet_minute.jpg" alt="4Vs" class="stretch noborder">
+						<p style="font-size: small; margin-top: -5mm;"><a href="https://www.flickr.com/photos/intelfreepress/6780720740" target="_blank" style="color:black">https://www.flickr.com/photos/intelfreepress/6780720740</a></p>
+					</section>
+
+					<section>
+						<h2>4Vs</h2>
+						<h4>Volume</h4>
+						<p class="small fragment" style="margin-top: -5mm;">Die Daten sind zu groß, um sie mit traditionellen Methoden handhaben zu können</p>
+						<p class="small fragment" style="margin-top: -5mm;">&Rightarrow; Scaling up / out, verteilte Speicherung / Verarbeitung</p>
+
+						<h4>Velocity</h4>
+						<p class="small fragment" style="margin-top: -5mm;">Viele Inserts; Wunsch nach (Near-)Real-Time-Verarbeitung</p>
+						<p class="small fragment" style="margin-top: -5mm;">&Rightarrow; NoSQL-Datenbanken, Stream-Processing-Frameworks</p>
+
+						<h4>Variety</h4>
+						<p class="small fragment" style="margin-top: -5mm;">Daten ohne festes Schema</p>
+						<p class="small fragment" style="margin-top: -5mm;">&Rightarrow; XML, JSON, NoSQL-Datenbanken</p>
+
+						<h4>Veracity</h4>
+						<p class="small fragment" style="margin-top: -5mm;">Unklar, ob die Daten wahre oder falsche Informationen beinhalten</p>
+						<p class="small fragment" style="margin-top: -5mm;">&Rightarrow; ML-Algorithmen (Machine Learning), Natural-Language-Processing (NLP), ...</p>
+					</section>
+
+					<section>
+					<h2>Klassifikation von Daten</h2>
+								<div class="columns">
+									<div style="width: 25cm; text-align: left;"><h4>Strukturierte Daten</h4></div>
+									<div class="fragment">
+										<span data-sql-query="select produktnr, bezeichnung, preis FROM produkte where produktnr IN (17,29)"></span>
+								</div>
+								</div>
+
+								<div class="columns">
+									<div style="width: 25cm;"><h4>Semi-strukturierte Daten</h4></div>
+									<div class="fragment">
+										<pre style="width: 14cm;"><code class="javascript">{ "_id": 17, 
+  "bezeichnung" : "Schokoriegel", 
+  "preis": 0.89 }</code></pre>
+								</div>
+								</div>
+
+								<div class="columns">
+									<div style="width: 25cm;"><h4>Unstrukturierte Daten</h4></div>
+									<div>
+										<p class="small">&nbsp;</p>
+								</div>
+								</div>
+								
+								<p style="margin-top: -5mm; font-size: 0.5em; background-color: #f5f5f5;" class="fragment">Am einfachsten ist es, Anfragen auf strukturierte Daten zu stellen, da sie einem festes Schema folgen. Die Metadaten (hier: Spaltennamen) beschreiben die Daten. Bei semi-strukturierten Daten sind die Metadaten in den Daten selbst enthalten. Das hier gezeigte JSON-Dokument ist selbstbeschreibend. Für Maschinen ist es einfach, Daten in dem Dokument zu suchen und Informationen daraus zu extrahieren, jedoch müssen Anwendungen dementsprechend entwickelt werden, dass sie mit flexiblen Schemas umgehen können. Andere Dokumente können ganz andere Attribute haben und es können andere Datentypen verwendet werden. In unstrukturierten Daten gibt es überhaupt keine Struktur. Was wir hier haben ist Text. Wir müssten ihn zunächst erstmal verarbeiten, um Informationen daraus zu extrahieren. Das ist deutlich komplexer als bei den anderen beiden Formen von Daten.</p>
+							
+								<div class="poll fragment" style="bottom:10px;">
+									<h1>Was ist der Unterschied zwischen strukturierten und semi-strukturierten Daten?</h1>
+											<ul>
+													<li>Es ist schwieriger, mit strukturierten Daten zu arbeiten</li>
+													<li data-poll="correct">Bei strukturierten Daten muss vorher ein Schema definiert werden</li>
+													<li>Bei strukturierten Daten gibt es Metadaten, bei semi-strukturierten nicht</li>
+													<li>Strukturierte Daten sind flexibler</li>
+											</ul>
+									<h2>https://fraage.de</h2>
+								</div>
+							</section>
+
+					<section>
+						<h3>Scaling up</h3>
+						<div style="position: absolute; top: 120px; right:50px; font-size:230px"><i class="fas fa-arrows-alt-v green"></i></div>
+
+						<p class="small">Vertikale Skalierung</p>
+						<ul style="list-style-type:none;">
+							<li><i class="fas fa-microchip"></i> mehr CPUs hinzfügen</li>
+							<li><i class="fas fa-memory"></i> mehr Arbeitsspeicher hinzufügen</li>
+							<li><i class="fas fa-hdd"></i> mehr und größere Festplatten / SSDs</li>
+						</ul>
+						
+						<p class="small fragment" >(+) einfach, keine Änderungen an der Software nötig</p>
+						<p class="small fragment" >(-) teuer, nur begrenzt möglich</p>
+
+						<h1 class="fragment grow"><i class="fas fa-server blue"></i></h1>
+						<aside class="notes">Vertikale Skalierung bedeutet, mehr Ressourcen einem Rechner hinzuzufügen oder die vorhandenen Ressourcen zu verbessern (schnelleres Netzwerk, ...). Dies ist nur in begrenztem Maße möglich. Außerdem wird dafür meist spezielle Hardware benötigt, die sehr teuer ist. Es wäre viel billiger, Allerwelts-Hardware (commodity hardware) zu kaufen und stattdessen Horizontal zu skalieren (siehe nächste Folie).</aside>
+					</section>
+
+					<section>
+						<h3>Scaling out</h3>
+						<div style="position: absolute; top: 120px; right:50px; font-size:230px"><i class="fas fa-arrows-alt-h green"></i></div>
+						<p class="small">Horizontale Skalierung: mehr Rechnerknoten einem Cluster hinzufügen</p>
+						<h1 style="margin-left: -10cm;"><i class="fas fa-server blue"></i>&nbsp;<span class="fragment" data-fragment-index="1"><i class="fas fa-server blue"></i></span>&nbsp;<span class="fragment" data-fragment-index="2"><i class="fas fa-server blue"></i></span></h1>
+						
+						<div class="fragment" data-fragment-index="3">
+							<h4>Replikation</h4>
+							<p class="small" style="margin-top: -5mm;">Kopien derselben Daten auf mehreren Rechnern speichern</p>
+						</div>
+
+						<div class="fragment" data-fragment-index="5">
+							<h4>Partitioning / Sharding</h4>
+							<p class="small" style="margin-top: -5mm;">Die Daten auf mehreren Rechnerknoten verteilen</p>
+						</div>					
+						
+						<div class="poll fragment" style="bottom:-120px" data-fragment-index="4">
+							<h1>Was ist der Vorteil von Replikation?</h1>
+									<ul>
+											<li>Hochverfügbarkeit</li>
+											<li>Lastbalancierung</li>
+											<li data-poll="correct">beides</li>
+									</ul>
+							<h2>https://fraage.de</h2>
+						</div>
+						<aside class="notes">Lineare Skalierbarkeit bedeutet, dass ein System doppelt so schnell wird, wenn man doppelt so viele Maschinen im Cluster hat. Horizontales Skalieren (Scale out) ist billiger als vertikales (scale up), aber es werden spezielle Frameworks, Algorithmen und Programmiermodelle benötigt, die dies unterstützen. Die Rechner im Cluster müssen miteinander kommunizieren, um verteilte Speicherung und effiziente verteilte Berechnungen zu unterstützen.</aside>
+					</section>
+
+					<section data-auto-animate>
+						<h3>Replikation</h3>
+						<p class="small" style="margin-top: -5mm;">Kopien derselben Daten auf mehreren Rechnern speichern</p>
+						<pre><code class="sql dontexecutesql">UPDATE produkte SET preis = 4.50 WHERE produktnr = 29;
+COMMIT;</code></pre>
+						<p class="small">Beispiel: Replikationsfaktor = 3</p>
+						<div class="columns" style="margin-top:-7mm;">
+							<div><h1><i class="fas fa-server blue"></i></h1><p style="margin-top: -10mm;" class="fragment fade-out" data-fragment-index="1">preis = 3.99</p><p style="margin-top: -10mm;" class="fragment" data-fragment-index="1">preis = 4.50</p></div>
+							<div><h1><i class="fas fa-server blue"></i></h1><p style="margin-top: -10mm;" class="fragment fade-out" data-fragment-index="3">preis = 3.99</p><p style="margin-top: -10mm;" class="fragment" data-fragment-index="3">preis = 4.50</p></div>
+							<div><h1><i class="fas fa-server blue"></i></h1><p style="margin-top: -10mm;" class="fragment fade-out" data-fragment-index="2">preis = 3.99</p><p style="margin-top: -10mm;" class="fragment" data-fragment-index="2">preis = 4.50</p></div>
+						</div>
+						<p class="fragment small">(+) Hochverfügbarkeit, Lastbalancierung, verteilte Berechnungen</p>
+						<aside class="notes">Der Hauptvorteil von Replikation ist die Hochverfügbarkeit. Das steht dafür, dass das System auch dann noch verfügbar ist (d.h. es nimmt Anfragen an und beantwortet sie), selbst wenn einer oder sogar mehrere Rechnerknoten im Cluster ausfallen. Lastbalancierung ist eine Technik, bei der verschiedene Clients Daten von verschiedenen Rechnern lesen, damit jeder einzelne Rechner weniger Anfragen bearbeiten muss. Das führt zu einer höheren Lesegeschwindigkeit (auch die Schreibgeschwindigkeit ist höher, weil die Rechner ja weniger mit Lesen beschäftigt sind), vor allem, wenn Rechner geographisch verteilt werden und Clients den für sie nächsten Rechner anfragen. Bei Replikation sind verteilte Berechnungen effizient möglich, weil weniger Daten zwischen den Rechnern hin und hertransferiert werden müssen.</aside>
+					</section>
+
+					<section>
+						<h3>NoSQL-Datenbanken</h3>
+						<div class="columns">
+							<div><p class="small">Typische Eigenschaften:</p>
+							<ul class="small">
+								<li class="fragment">Verteilte Speicherung</li>
+								<li class="fragment">Verteilte Berechnungen</li>
+								<li class="fragment">&Rightarrow; hohe (horizontale) Skalierbarkeit</li>
+								<li class="fragment">Open-Source / kosteneffizient</li>
+								<li class="fragment">Flexible Schemata</li>
+								<li class="fragment">Unterstützung für semi-strukturierte und unstrukturierte Daten</li>
+								<li class="fragment">Nicht-relationales Datenmodell</li>
+							</ul></div>
+						
+						<div><img src="img/1/mongodb.png" alt="MongoDB" class="noborder"><br>
+							<img src="img/1/redis.png" alt="Redis" class="noborder" style="margin-top:-5mm"><br>
+							<img src="img/1/cassandra.png" alt="Cassandra" class="noborder" style="margin-top:-5mm"><br>
+							<img src="img/1/DynamoDB.png" alt="DynamoDB" class="noborder" style="margin-top:-5mm; height: 2cm;"><br>
+							<img src="img/1/neo4j.png" alt="Neo4J" class="noborder" style="margin-top:-5mm"><br>
+							<img src="img/1/hbase.png" alt="HBase" class="noborder" style="margin-top:-9mm"></div>
+		
+						</div>
+						<aside class="notes">Die Liste rechts zeigt die populärsten NoSQL-DBMS: MongoDB, Redis, Cassandra, DynamoDB, Neo4J, HBase. Siehe <a href="https://db-engines.com/en/ranking">https://db-engines.com/en/ranking</a>. </aside>
+					</section>
+		
+					<section>
+						<h3>4 Kategorieren von NoSQL-DBMSs</h3>
+						<h4>Key-Value-Stores</h4>
+						<p class="fragment" style="margin-top: -5mm;">$Key \rightarrow Value$</p>
+		
+						<h4>Wide-Column-Stores</h4>
+						<p class="fragment" style="margin-top: -5mm;">$Table \rightarrow (RowID \rightarrow (Column \rightarrow Value))$</p>
+		
+						<h4>Dokumentendatenbanken</h4>
+						<p class="fragment" style="margin-top: -5mm;">$Database \rightarrow (Collection \rightarrow Document*)$</p>
+		
+						<h4>Graphdatenbanken</h4>
+						<p class="fragment" style="margin-top: -5mm;">$G = (V, E)$</p>
+		
+						<aside class="notes">Key-Value-Stores speichern eine Menge von Schlüssel-Wert-Paaren und erlauben einen Schlüssel-basierten Zugriff auf die Werte. In Wide-Column-Stores gibt es Tabellen, wobei jede Zeile in der Tabelle beliebige Spalten besitzen kann. Dokumentendatenbanken speichern beliebig stukturierte Dokumente (z. B. JSON). Bei Graphdatenbanken sind die Daten in den Knoten und Kanten eines Graphs gespeichert..</aside>
+					</section>
+		
+					<section>
+						<h3>Redis (Key-Value Store)</h3>
+						<img src="img/1/redis.png" alt="Redis" class="noborder" style="position: absolute; right: 1cm; top: 3cm;">
+						<p class="small">Datenmodell: Menge von Schlüssel-Wert-Paaren</p>
+						<p class="small">Datentypen für Werte:<br>Strings, Listen, Mengen, Hashes, Sorted Sets, ...</p>
+						
+						<div class="columns">
+							<div class="fragment" style="margin-left: -15mm;"><h4>Strings</h4>
+								<p class="small" style="margin-top: -5mm;">Beliebige Daten</p>
+								<pre style="width: 10cm; margin-top: -5mm;"><code class="bash">> SET a 9
+OK
+> GET a
+9
+> INCR a
+10</code></pre>
+		<p class="small">Auszuprobieren auf <a href="https://try.redis.io/">https://try.redis.io/</a></p>
+		</div>
+							<div class="fragment"><h4>Listen</h4>
+								<p class="small" style="margin-top: -5mm;">Geordnete Liste von Strings</p>
+								<pre style="width: 10cm; margin-top: -5mm;"><code class="bash">> RPUSH liste "Sommer"
+1
+> LPUSH liste "Frühling"
+2
+> LRANGE liste 0 -1
+"Frühling"
+"Sommer"
+> RPOP liste
+"Sommer"</code></pre>
+			</div>
+						</div>
+						
+						<div class="poll fragment" style="bottom:-100px">
+							<h1>Wofür könnte das L in LPUSH und LPOP stehen?</h1>
+									<ul>
+											<li>Link</li>
+											<li>Loop</li>
+											<li>List</li>
+											<li data-poll="correct">Left</li>
+									</ul>
+							<h2>https://fraage.de</h2>
+						</div>
+		
+		
+		<aside class="notes">Key-Value-Stores speichern ihre Daten als Menge von Schlüssel-Wert-Paaren (ähnlich zu einer Map, einem assoziativen Array oder einem Dictionary). Redis verteilt die Schlüssel-Wert-Paare auf den Rechnern in einem Cluster. Im Beispiel links sind die Kommandos <code>SET</code>, <code>GET</code> und <code>INCR</code> auf Strings zu sehen. Strings sind beliebige binäre Daten, wie Text, Bilder, HTML-Seiten, JSON-Dokumente, ...</aside>
+					</section>
+		
+					<section>
+						<h3>HBase (Wide-Column-Store)</h3>
+						<img src="img/1/hbase.png" alt="HBase" class="noborder" style="position: absolute; right: 1cm; top: 3cm; height: 2cm;">
+						<p class="small">Datenmodell: Tabelle mit Row-ID und Spaltenfamilien mit beliebigen Spalten.</p>
+						<p class="small">Datentyp für Werte: byte[]</p>
+		
+						<pre><code class="bash">> CREATE 'websites', 'info', 'links'
+> PUT 'websites', 'www.othr.de', 'info:title', 'OTH Regensburg'
+> PUT 'websites', 'www.othr.de', 'info:language', 'German'
+> PUT 'websites', 'www.othr.de', 'links:www.stwno.de', ''
+> GET 'websites', 'www.othr.de'</code></pre>
+						
+		<table style="font-size:0.65em;">
+			<thead>
+					<tr><th><u>Row-ID</u></th><th>info</th><th>links</th></tr>
+			</thead>
+			<tbody>
+					<tr><td>www.othr.de</td><td>
+							<table>
+								<thead><tr><th>title</th><th>language</th></tr></thead>
+								<tbody><tr><td>OTH Regensburg</td><td>German</td></tr></tbody>
+							</table>
+					</td><td>
+						<table>
+							<thead><tr><th>www.stwno.de</th></tr></thead>
+							<tbody><tr><td></td></tr></tbody>
+						</table>
+					</td></tr>
+			</tbody>
+		</table>
+		
+		<aside class="notes">Um verschiedene Anwendungskonzepte voneinander zu trennen, werden Spalten Spaltenfamilien zugeordnet, die beim Anlegen der Tabelle spezifiziert werden. Im Beispiel trennen wir allgemeine Infos über Webseiten (andere Zeilen können andere Spalten besitzen) von der Menge ausgehender Links. In HBase kann man auf eine Zeile via ihrer Row-ID zugreifen (<code>GET</code>) oder über einen Bereich von Row-IDs iterieren (<code>SCAN</code>). HBase speichert die Daten im verteilten Dateisystem HDFS (Hadoop distributed file system). Oft wird MapReduce eingesetzt, um komplexere Big-Data-Analysen auf den Daten auszuführen.</aside>
+					</section>
+	
+		
+					<section>
+						<h3>MongoDB (Dokumentendatenbank)</h3>
+						<img src="img/1/mongodb.png" alt="MongoDB" class="noborder" style="position: absolute; right: 1cm; top: 3cm; height: 2cm;">
+						<p class="small">Datenmodell: Kollektionen mit beliebig strukturierten (JSON-)Dokumenten.</p>
+						<p class="small">Datentypen für Werte: die 6 JSON-Datentypen (String, <br>Zahl, Subdokument, Array, Boolean, Null) + ein Paar mehr.</p>
+		
+						<pre style="width: 100%;"><code class="javascript">> use socialnetwork
+switched to db socialnetwork
+
+> db.personen.insert({"name": "Peter", "hobbies": ["Klavier","Yoga"]})
+WriteResult({ "nInserted" : 1 })
+
+> db.personen.find()
+{ "_id" : ObjectId("60811e66216a217c24e2b7c5"), "name" : "Peter", 
+"hobbies" : [ "Klavier", "Yoga" ] }</code></pre>
+		<aside class="notes">Wenn man ein Dokument in eine nicht existierende Kollektion oder Datenbank einfügt, wird die Kollektion oder DB in dem Moment neu angelegt. Jedes MongoDB-Dokument hat das Feld <code>_id</code>. Wenn man es nicht manuell jetzt (auf eine Zahl, einen String, ...), wird automatisch eine eindeutige ObjectId erzeugt. Ähnlich zum Key in Redis und der Row-ID in HBase, ist das <code>_id</code>-Feld eindeutig und ermöglicht einen schnellen Zugriff auf Dokumente. MongoDB unterstützt aber auch Indexe auf anderen Feldern.</aside>
+					</section>
+		
+					<section>
+						<h3>Neo4J (Graphdatenbanken)</h3>
+						<img src="img/1/neo4j.png" alt="Neo4J" class="noborder" style="position: absolute; right: 1cm; top: 1.1cm;">
+						<p class="small">Datenmodell: Property-Graph $G = (V, E)$</p>
+						<ul class="small">
+							<li class="fragment"><em>Knoten</em>: haben ein Label (Knotentyp) und Properties (Schlüssel-Wert-Paare)<br>
+							<code class="fragment">(:person { "name": "Peter", "wohnort": "Berlin" })</code><br>&nbsp;</li>
+							<li class="fragment"><em>Kanten</em>: gerichtete Verbindung zweier Knoten, haben Label und Properties<br>
+							<code class="fragment">() -[:Freund {"seit":"2021-05-04"}]-> ()</code><br>&nbsp;</li>
+						</ul>
+						<img class="fragment" style="width:50%;" uml='skinparam roundCorner 25
+		
+		object ":person" as peter {
+			name = Peter
+			wohnort = Berlin
+		}
+		
+		object ":person" as jane {
+			name = Jane
+			wohnort = Berlin
+		}
+		
+		peter -> jane : Freund\nseit = 2021-05-04
+		'>
+					<aside class="notes">Graphs consist of nodes edges. In typical graph databases, both nodes and edges can have a label, and a list of arbitrary properties. In Neo4J, there are only directed edges. So, when we want to model a friendship between two person nodes - friendship is a symmetric relationship -, we simply choose an arbitrary direction, either an outgoing or incoming edge. Later, when querying the data, we simply traverse edges in both directions to find a person's friends.</aside>
+					</section>
+		
+					<section>
+						<h2>Zusammenfassung</h2>
+						<ul class="small">
+							<li>Big Data: Volume, Velocity, Variety, Veracity</li>
+							<li class="fragment">Unstrukturierte, semi-strukturierte, strukturierte Daten</li>
+							<li class="fragment">NoSQL = Not only SQL</li>
+							<li class="fragment">Key-Value-Stores<br>z. B., Redis: unterstützt simple und komplexe Typen (Listen, Mengen, ...))</li>
+							<li class="fragment">Wide-Column-Stores<br>z. B., HBase: PUT/GET/SCAN API über Row-id(-Bereiche)</li>
+							<li class="fragment">Dokumentendatenbanken<br>z. B. MongoDB: Kollektion von JSON-Dokumenten</li>
+							<li class="fragment">Graphdatenbanken<br>z. B., Neo4J: Property-Graphen</li>
+						</ul>
+		</section>
 
 			</div>
 		</div>
