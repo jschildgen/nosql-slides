@@ -162,7 +162,7 @@ WriteResult({ "nInserted" : 1 })</code></pre>
 										<h1>Wie viel Prozent mehr oder weniger Platz benötigt die BSON-Repräsentation im vergleich zum JSON-String?</h1>
 												<ul>
 														<li>27% weniger</li>
-														<li data-poll="correct">same</li>
+														<li data-poll="correct">gleich viel</li>
 														<li>11% mehr</li>
 												</ul>
 										<h2>https://fraage.de</h2>
@@ -171,6 +171,212 @@ WriteResult({ "nInserted" : 1 })</code></pre>
 									<aside class="notes">BSON ist ein von MongoDB eingeführtes Speicherformat. In MongoDB werden Dokumente nämlich nicht als JSON-Strings abgespeichert, sondern in einer binären Form, wie diese Folie zeigt. Dies macht schnellere Suchen möglich. Das Längenfeld ganz am Anfang ist nützlich, um ein kompletten Dokument vollständig zu überspringen und direkt zum nächsten Dokument zu springen. Das gleiche gilt für die Längenangaben von String-Feldern. Mit dieser Info kann schnell zum nächsten Attribut gesprungen werden.</aside>
 								</section>
 
+								<section>
+									<h3>Datenbanken und Collections</h3>
+									<div class="sl-block" data-block-type="shape" data-block-id="2121ed019183690fcbf4d59ebf307854" style="min-width: 4px; min-height: 4px; width: 245px; height: 152.5px; left: 671px; top: 184px;">
+										<div class="sl-block-content" data-shape-type="rect" data-shape-fill-color="rgb(111, 168, 220)" data-shape-stretch="true" style="z-index: 11;"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 245 153">
+														<rect width="245" height="152.5" rx="0" ry="0" class="shape-element" fill="rgb(111, 168, 220)"></rect>
+												</svg></div>
+								</div>
+								<div class="sl-block" data-block-type="shape" style="min-width: 4px; min-height: 4px; width: 245px; height: 45px; left: 671px; top: 161px;" data-block-id="6fbcffef94ac35b1a289820d4da4a3c7">
+										<div class="sl-block-content" data-shape-type="circle" data-shape-fill-color="rgb(109, 158, 235)" data-shape-stretch="true" style="z-index: 12;" data-shape-stroke-color="#000000" data-shape-stroke-width="5px"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 245 45">
+														<defs>
+																<clipPath id="shape-mask-5-1569275407016">
+																		<ellipse rx="122.5" ry="22.5" cx="122.5" cy="22.5" fill="rgb(109, 158, 235)" stroke="#000000" stroke-width="10"></ellipse>
+																</clipPath>
+														</defs>
+														<ellipse rx="122.5" ry="22.5" cx="122.5" cy="22.5" class="shape-element" fill="rgb(109, 158, 235)" stroke="#000000" stroke-width="10" clip-path="url(#shape-mask-5-1569275407016)"></ellipse>
+												</svg></div>
+								</div>
+								<div class="sl-block" data-block-type="shape" style="min-width: 4px; min-height: 4px; width: 245px; height: 45px; left: 670px; top: 314px;" data-block-id="5ea1aa800f8cffe0cfcd668051167951">
+										<div class="sl-block-content" data-shape-type="circle" data-shape-fill-color="rgb(111, 168, 220)" data-shape-stretch="true" style="z-index: 10;" data-shape-stroke-color="#000000" data-shape-stroke-width="5px"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 245 45">
+														<defs>
+																<clipPath id="shape-mask-6-1569275422813">
+																		<ellipse rx="122.5" ry="22.5" cx="122.5" cy="22.5" fill="rgb(111, 168, 220)" stroke="#000000" stroke-width="10"></ellipse>
+																</clipPath>
+														</defs>
+														<ellipse rx="122.5" ry="22.5" cx="122.5" cy="22.5" class="shape-element" fill="rgb(111, 168, 220)" stroke="#000000" stroke-width="10" clip-path="url(#shape-mask-6-1569275422813)"></ellipse>
+												</svg></div>
+								</div>
+								<div class="sl-block" data-block-type="line" style="width: auto; height: auto; min-width: 1px; min-height: 1px; left: 670px; top: 184px;" data-block-id="dfef938d157782f2c4686c5b0fee9f03">
+										<div class="sl-block-content" data-line-x1="0" data-line-y1="152.5" data-line-x2="1" data-line-y2="0" data-line-color="#000000" data-line-start-type="none" data-line-end-type="none" style="z-index: 13;" data-line-width="5px"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" preserveAspectRatio="xMidYMid" width="1" height="152.5" viewBox="0 0 1 152.5">
+														<line stroke="rgba(0,0,0,0)" stroke-width="15" x1="0.5" y1="153" x2="1.5" y2="0.5"></line>
+														<line class="line-element" stroke="#000000" stroke-width="5" x1="0.5" y1="153" x2="1.5" y2="0.5"></line>
+												</svg></div>
+								</div>
+								<div class="sl-block" data-block-type="line" style="width: auto; height: auto; min-width: 1px; min-height: 1px; left: 915px; top: 184px;" data-block-id="a9efdff789a6eab3c8fc93c68b0c09ce">
+										<div class="sl-block-content" data-line-x1="0" data-line-y1="152.5" data-line-x2="0" data-line-y2="0" data-line-color="#000000" data-line-start-type="none" data-line-end-type="none" style="z-index: 14;" data-line-width="5px"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" preserveAspectRatio="xMidYMid" width="1" height="152.5" viewBox="0 0 1 152.5">
+														<line stroke="rgba(0,0,0,0)" stroke-width="15" x1="0.5" y1="153" x2="0.5" y2="0.5"></line>
+														<line class="line-element" stroke="#000000" stroke-width="5" x1="0.5" y1="153" x2="0.5" y2="0.5"></line>
+												</svg></div>
+								</div>
+								
+								
+								<div class="sl-block" data-block-type="shape" data-name="shape-0eba5a" data-block-id="a9d5cec9e7c9577db95f1957028817f9" style="width: 176px; height: 70px; left: 689px; top: 225.25px;">
+										<div class="sl-block-content" data-shape-type="rect" data-shape-fill-color="rgb(68, 170, 171)" data-shape-stretch="true" style="z-index: 15;" data-shape-stroke-color="#000000" data-shape-stroke-width="1px"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 176 70">
+														<defs>
+																<clipPath id="shape-mask-1-1632802709529">
+																		<rect width="176" height="70" rx="0" ry="0" fill="rgb(68, 170, 171)" stroke="#000000" stroke-width="2"></rect>
+																</clipPath>
+														</defs>
+														<rect width="176" height="70" rx="0" ry="0" class="shape-element" fill="rgb(68, 170, 171)" stroke="#000000" stroke-width="2" clip-path="url(#shape-mask-1-1632802709529)"></rect>
+												</svg></div>
+								</div>
+								<div class="sl-block" data-block-type="shape" style="width: 176px; height: 70px; left: 705.5px; top: 247px;" data-block-id="d30e787f2c0d86d0df8ffeec261a0904" data-name="shape-b2b4d7">
+										<div class="sl-block-content" data-shape-type="rect" data-shape-fill-color="rgb(68, 170, 171)" data-shape-stretch="true" style="z-index: 16;" data-shape-stroke-color="#000000" data-shape-stroke-width="1px"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 176 70">
+														<defs>
+																<clipPath id="shape-mask-2-1632802714746">
+																		<rect width="176" height="70" rx="0" ry="0" fill="rgb(68, 170, 171)" stroke="#000000" stroke-width="2"></rect>
+																</clipPath>
+														</defs>
+														<rect width="176" height="70" rx="0" ry="0" class="shape-element" fill="rgb(68, 170, 171)" stroke="#000000" stroke-width="2" clip-path="url(#shape-mask-2-1632802714746)"></rect>
+												</svg></div>
+								</div>
+								<div class="sl-block" data-block-type="shape" style="width: 176px; height: 70px; left: 725px; top: 266px;" data-block-id="3468e2a599a1707a47e2b3873861ce06" data-name="shape-2d79a1">
+										<div class="sl-block-content" data-shape-type="rect" data-shape-fill-color="rgb(68, 170, 171)" data-shape-stretch="true" style="z-index: 17;" data-shape-stroke-color="#000000" data-shape-stroke-width="1px"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 176 70">
+														<defs>
+																<clipPath id="shape-mask-3-1632802718230">
+																		<rect width="176" height="70" rx="0" ry="0" fill="rgb(68, 170, 171)" stroke="#000000" stroke-width="2"></rect>
+																</clipPath>
+														</defs>
+														<rect width="176" height="70" rx="0" ry="0" class="shape-element" fill="rgb(68, 170, 171)" stroke="#000000" stroke-width="2" clip-path="url(#shape-mask-3-1632802718230)"></rect>
+												</svg></div>
+								</div>
+								<div class="sl-block" data-block-type="text" data-name="text-df55fd" data-block-id="bba1b51f13b2f4a6e3160a3eeff88ad7" style="height: auto; width: 167px; left: 725px; top: 260.25px;">
+										<div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 18;" dir="ui">
+												<p style="font-size:0.7em; text-align: center; margin-top: 1mm;">Collection</p>
+												<p style="font-size:0.7em; text-align: center; margin-top: -6mm;">"produkte"</p>
+										</div>
+								</div>
+								<div class="sl-block" data-block-type="text" style="height: auto; width: 239px; left: 673px; top: 359px;" data-block-id="dfa35455ba955887c6e7e3c893a2b52c" data-name="text-16952c">
+										<div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 19;" dir="ui">
+											<p style="font-size:0.7em; text-align: center; margin-top: 1mm;">db "webshop"</p>
+										</div>
+								</div>
+								<p class="small">Eine MongoDB-Instanz beinhaltet mehrere Datenbanken,<br>
+								                 eine Datenbank beinhaltet Collections,<br>
+																 eine Collection speichert Dokumente.</p>
+
+									<pre class="fragment" style="width: 17cm; margin-left: 0cm;"><code class="javascript">> db
+test
+
+> show dbs
+admin    0.000GB
+config   0.000GB
+local    0.000GB
+webshop  0.000GB
+
+> use webshop
+switched to db webshop
+
+> show collections
+produkte</code></pre>
+
+<aside class="notes">Diese Folie zeigt vier Mongo-Shell-Kommandos. <code>db</code> zeigt, welche Datenbank aktuell ausgewählt ist, <code>show dbs</code> zeigt alle Datenbanken an, mit <code>use</code> kann die Datenbank gewechselt werden. Man kann auch zu einer Datenbank wechseln, die es noch gar nicht gibt. Sobald man darin zum ersten Mal schreibt, legt MongoDB die Datenbank automatisch an. <code>show collections</code> listet alle Collections in der aktuell geöffneten DB. </aside>
+								</section>
+
+								<section>
+									<h3><code>findOne</code></h3>
+									<h4><code>findOne([selektion], [projektion])</code></h4>
+									<p class="small">Liefert ein Dokument zurück, was das Selektionskriterium erfüllt.</p>
+									<pre class="fragment"><code class="javascript">> db.produkte.findOne()
+{ "_id" : 17, "bezeichnung" : "Schokoriegel", "preis" : 0.89 }</code></pre>
+
+<pre class="fragment"><code class="javascript">> p = db.produkte.findOne({ "_id": 29 }, {"bezeichnung": 1})
+{ "_id" : 29, "bezeichnung" : "Spülmaschinentabs" }
+> p._id
+29
+</code></pre>
+<div class="columns fragment">
+	<div><h4>Selektion</h4>
+	<p class="small">Feld-Überprüfungen auf Gleichheit:<br><code>{ "feld": "wert" }</code></p>
+</div>
+	<div class="fragment"><h4>Projektion</h4>
+	<p class="small"><code>{ "feld": 1 }</code> (nur diese Felder)<br>// das <code>_id</code>-Feld ist aber dennoch dabei<br>
+		<code>{ "feld": 0 }</code> (diese Felder nicht)</p>
+</div>
+</div>
+<aside class="notes">Die Mongo Shell versteht JavaScript. Das untere Beispiel auf dieser Folie zeigt, wie das Ergebnis eines <code>findOne</code>-Befehls (ein Objekt) in eine Variable geschrieben werden kann.</aside>
+</section>
+
+								<section>
+									<h3><code>find</code></h3>
+									<h4><code>find([selektion], [projektion])</code></h4>
+									<p class="small">Liefert einen Cursor zurück, zur Iteration über die Ergebnismenge.</p>
+									<pre class="fragment"><code class="plaintext">> db.produkte.find()
+// ... (listet 20 Dokumente auf)
+Type "it" for more
+> it
+// ... (die nächsten 20)</code></pre>
+
+									<pre class="fragment"><code class="javascript">> db.produkte.find().forEach(function(p) { print(p._id) })</code></pre>
+
+</section>
+
+<section>
+	<h3>Cursor-Methoden</h3>
+	<ul class="small">
+		<li><code>cursor.pretty()</code> - Besser lesbare Ausgabe</li>
+		<li><code>cursor.sort({"feld":1})</code> - Aufsteigend sortieren (absteigend: -1)</li>
+		<li><code>cursor.limit(n)</code></li>
+		<li><code>cursor.skip(offset)</code> - Cursor beginnt erst nach der gegebenen Anzahl</li>
+		<li><code>cursor.count()</code> - Anzahl der vom Cursor referenzierten Dokumente</li>
+	</ul>
+	<pre style="width: 100%;"><code class="javascript">> db.produkte.find().sort({"preis":-1}).limit(1).skip(1).pretty()
+{
+  "_id" : 18,
+  "bezeichnung" : "Müsliriegel",
+  "preis" : 1.19,
+  "hersteller" : {
+    "firma" : "Monsterfood",
+    "land" : "USA"
+  }
+}</code></pre>
+
+<div class="poll fragment" style="bottom: -100px; width: 9.5cm;">
+	<h1>Was findet die auf der Folie gezeigte Query?</h1>
+			<ul>
+				<li>Das billigste Produkte</li>
+				<li>Das zweitbilligste Produkte</li>
+					<li>Das teuerste Produkt</li>
+					<li data-poll="correct">Das zweitteuerste Produkt</li>
+			</ul>
+	<h2>https://fraage.de</h2>
+</div>
+
+<aside class="notes"><code>sort</code> kann ähnlich wie <code>ORDER BY</code> in SQL auch nach mehreren Kriterien sortieren. Die Reihenfolge der Sortierkriterien ist relevant. Die hier gezeigte Anfrage sucht zunächst alle Dokumente in der Collection "produkte", sortiert die Ergebnismenge absteigend nach Preis, überspringt ein Dokument (also das teuerste Produkt) und gibt nur ein Dokument aus. Gefunden wird also das zweitteuerste Produkt.</aside>
+</section>
+
+<section>
+	<h3>Selektion</h3>
+	<div style="position: absolute; top: -1cm; right:5px; font-size:170px" class="green">&sigma;</div>
+	<pre style="width: 20cm; margin-left: 0;"><code class="javascript">db.produkte.find({"preis": 0.89})</code></pre>
+	<div class="fragment">
+	<p class="small">Mehrere Kriterien &RightArrow; UND-Verknüpfung</p>
+	<pre style="width: 24cm; margin-left: 0; margin-top: -4mm;"><code class="javascript">db.produkte.find({"preis": 0.89, "bezeichnung": "Schokoriegel"})</code></pre>
+</div>
+<div class="fragment">
+	<p class="small">Vergleichsoperatoren: <code>$eq</code>, <code>$gt</code>, <code>$gte</code>, <code>$in</code>, <code>$lt</code>, <code>$lte</code>, <code>$ne</code>, <code>$nin</code></p>
+	<pre style="width: 24cm; margin-left: 0; margin-top: -4mm;"><code class="javascript">db.produkte.find({"preis": { "$gt": 1.50 }})</code></pre>
+	<pre class="fragment" style="width: 24cm; margin-left: 0; margin-top: -4mm;"><code class="javascript">db.produkte.find({"preis": { "$gte": 1, "$lte":2 }})</code></pre>
+</div>
+<div class="fragment">
+	<p class="small">Logische Operatoren: <code>$and</code>, <code>$not</code>, <code>$nor</code>, <code>$or</code></p>
+	<pre style="width: 24cm; margin-left: 0; margin-top: -4mm;"><code class="javascript">db.produkte.find({"$or" : [ {"bezeichnung": "Schokoriegel"},
+                            {"bezeichnung": "Müsliriegel"} ] })</code></pre>
+</div>
+
+<div class="poll fragment" style="bottom: -180px; width: 9.5cm;">
+	<h1>Was ist äquivalent zur unteren Anfrage auf der Folie?</h1>
+			<ul>
+				<li>db.produkte.find({"bezeichnung": "Schokoriegel", "bezeichnung": "Müsliriegel"})</li>
+				<li data-poll="correct">db.produkte.find({"bezeichnung": {"$in": ["Schokoriegel", "Müsliriegel"]}})</li>
+					<li>db.produkte.find({"$in": {"bezeichnung": ["Schokoriegel", "Müsliriegel"]}})</li>
+			</ul>
+	<h2></h2>
+</div>
+<aside class="notes">Die hier gezeigten Anfragen finden (1) Produkte, die 89ct kosten, (2) Produkte die 89ct kosten und die Bezeichnung Schokoriegel haben, (3) mehr als 1.50 EUR kosten, (4) zwischen 1 und 2 EUR kosten, (5) entweder die Bezeichnung Schokoriegel oder Müsliriegel haben.</aside>	
+</section>
 			</div>
 		</div>
 
