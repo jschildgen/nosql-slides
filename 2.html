@@ -131,7 +131,7 @@ WriteResult({ "nInserted" : 1 })</code></pre>
 								<section>
 									<h3>JSON (JavaScript Object Notation)</h3>
 									<p class="small">6 JSON-Datentypen:</p>
-									<table class="small">
+									<table class="small"  style="margin-top: -4mm; margin-bottom: -4mm;">
 										<tbody>
 											<tr><td>String</td><td><code>"hallo"</code></td></tr>
 											<tr><td>Zahl</td><td><code>3.5</code></td></tr>
@@ -145,7 +145,7 @@ WriteResult({ "nInserted" : 1 })</code></pre>
 									<pre><code class="json">{"name":"Ute", "admin": true, "kinder": [], "job": null,
  "adressen": [ {"strasse":"Bergstr.", "hausnr": 25},
                {"strasse":"Hauptstr.", "hausnr": 17}] }</code></pre>
-							 <aside class="notes">Arrays können beliebige Elemente beliebigen Typs besitzen. Objekte bestehen aus Feld-Wert-Paaren. Feldnamen sind innerhalb eines Objekts eindeutig, Werte können von einem beliebigen Typen sein. MongoDB verwendet neben den hier gezeigten 6 JSON-Datentypen noch ein Paar weitere (für Datum, Binärdaten, Timestamps, reguläre Ausdrücke, ...)</aside>
+							 <aside class="notes">Arrays können beliebige Elemente beliebigen Typs besitzen. Objekte bestehen aus Feld-Wert-Paaren. Feldnamen sind innerhalb eines Objekts eindeutig, Werte können von einem beliebigen Typen sein. MongoDB verwendet neben den hier gezeigten 6 JSON-Datentypen noch ein Paar weitere (für Datum, Binärdaten, Timestamps, reguläre Ausdrücke, ...). In der Mongo Shell darf man die Anführungszeichen bei Feldnamen weglassen, wenn diese keine speziellen Zeichen beinhalten ($ ist ok).</aside>
 								</section>
 
 								<section>
@@ -377,6 +377,151 @@ Type "it" for more
 </div>
 <aside class="notes">Die hier gezeigten Anfragen finden (1) Produkte, die 89ct kosten, (2) Produkte die 89ct kosten und die Bezeichnung Schokoriegel haben, (3) mehr als 1.50 EUR kosten, (4) zwischen 1 und 2 EUR kosten, (5) entweder die Bezeichnung Schokoriegel oder Müsliriegel haben.</aside>	
 </section>
+
+<section>
+	<h3><code>$regex</code> - Reguläre Ausdrücke</h3>
+	<p class="small">Reguläre Ausdrücke ermöglichen eine Muster-basierte Suche.</p>
+	<pre><code class="javascript">db.produkte.find({bezeichnung:{$regex: /^S.*/}})</code></pre>
+	<div class="columns small">
+		<div>
+			<table>
+				<tr><td><code>.</code></td><td>Beliebiges Zeichen</td></tr>
+				<tr><td><code>^</code></td><td>String-Anfang</td></tr>
+				<tr><td><code>$</code></td><td>String-Ende</td></tr>
+				<tr><td><code>[0-9a-c\.,]</code></td><td>Eines der Zeichen</td></tr>
+				<tr><td><code>[^0-9a-c\.,]</code></td><td>Alle Zeichen, außer diese</td></tr>
+				<tr><td><code>A|S</code></td><td>Regex A oder S</td></tr>
+			</table>
+		</div>
+		<div>
+			<table>
+				<tr><td><code>*</code></td><td>0 mal oder öfter</td></tr>
+				<tr><td><code>+</code></td><td>Mind. einmal</td></tr>
+				<tr><td><code>?</code></td><td>Keinmal oder einmal</td></tr>
+				<tr><td><code>{m}</code></td><td>Genau m mal</td></tr>
+				<tr><td><code>{m,n}</code></td><td>Zwischen m und n mal</td></tr>
+				<tr><td><code>{m,}</code></td><td>Mind. m mal</td></tr>
+			</table>
+		</div>
+	</div>
+	<pre style="margin-top: -1mm;"><code class="javascript">db.kunden.find({email:{$not:{$regex:
+ /^[A-za-z0-9_\-\.\+]+@[A-Za-z0-9\-\.]+\.[a-zA-Z]{2,}$/}}})</code></pre>
+ <aside class="notes">Die untere Anfrage findet Kunden mit einer potenziell ungültigen E-Mail-Adresse (der Ausdruck ist nicht perfekt). Vor dem @-Zeichen stehen mind. 1 der angegebenen Zeichen, danach ebenfalls, dann kommt ein Punkt und noch mind. zwei Buchstaben. Mit \ werden spezielle Zeichen (wie .) escapet.</aside>
+</section>
+
+<section>
+	<h3><code>insert</code> - Einfügen von Dokumenten</h3>
+	<p class="small">Das Feld <code>_id</code> ist Pflicht und eindeutig.<br>
+		Fehlt es, wird automatisch eine ObjectId generiert.</p>
+	<pre><code class="javascript">db.kunden.insert({"name":"Ulf", "geboren":1985})</code></pre>
+	<div class="fragment">
+	<p class="small">Manuell setzen geht natürlich auch...</p>
+	<pre><code class="javascript">db.kunden.insert({"_id": 5, "name":"Pia", "geboren":1972})</code></pre>
+</div>
+	<div class="fragment">
+	<p class="small">... solange sie eindeutig ist!</p>
+	<pre><code class="javascript">db.kunden.insert({"_id": 5, "name":"Kai", "geboren":1980})</code></pre>
+	<p style="font-size: 60%;"><i class="red">E11000 duplicate key error collection: webshop.kunden index: _id_ dup key: { _id: 5.0 }</i></p>
+</div>
+<div class="fragment">
+	<h4><code>insertMany(Array&lt;document&gt;)</code></h4>
+	<pre><code class="javascript">db.kunden.insertMany([{"name":"Peter"},{"name":"Ute"}])</code></pre>
+</div>
+	<aside class="notes">Fügt man etwas in eine Collection ein, die noch nicht existiert, wird sie automatisch neu angelegt.</aside>
+</section>
+
+<section>
+	<h3><code>update</code> - Ersetzen von Dokumenten</h3>
+	<h4>update(kriterium, neues_dokument)</h4>
+	<pre><code class="javascript">db.kunden.update( {"_id":5}, { "geboren": 1973 } )</code></pre>
+	<p class="small">Vorher: <code class="javascript">{ "_id" : 5, "name" : "Pia", "geboren" : 1972 }</code>
+	<br>Nachher: <code class="javascript">{ "_id" : 5, "geboren" : 1973 }</code></p>
+	
+	<div class="fragment">
+	<p class="small">Ein Ansatz: Dokument holen, lokal modifizieren, zurückschreiben</p>
+	<pre><code class="javascript">kunde = db.kunden.findOne( { "_id":5 });
+kunde.geboren = 1973;
+db.kunden.update({"_id": kunde._id}, kunde);</code></pre>
+</div>
+<div class="poll fragment" style="bottom: -180px; width: 9.5cm;">
+	<h1>Warum steht unten nicht {"_id": 5} als Kriterium?</h1>
+			<ul>
+				<li data-poll="correct">Ginge auch, so ist's aber cooler</li>
+				<li>Das wäre ein ungültiges Kriterium</li>
+				<li>Dann würde man den _id-Wert ändern</li>
+				<li>Dann gäbe es die _id zweimal, geht also nicht</li>
+			</ul>
+	<h2></h2>
+</div>
+</section>
+
+<section>
+	<h3><code>update</code> - Modifikatoren</h3>
+	<h4><code>$set</code>, <code>$inc</code>, <code>$rename</code>, <code>$unset</code>, ...</h4>
+	<pre><code class="javascript">db.kunden.update({"_id": 5}, {$set: {geboren:1973}})</code></pre>
+
+	<div class="fragment" style="margin-top: 10mm;">
+		<h4><code>$push</code>, <code>$addToSet</code>, ... (für Arrays)</h4>
+		<pre><code class="javascript">db.kunden.update({"_id": 5}, {$push: {telefon:"0176123"}})</code></pre>
+	</div>
+
+	<aside class="notes">Die hier gezeigten Operatoren werden verwendet, um Teile an Dokumenten an Ort und Stelle zu ändern.<br>Der Unterschied zwischen <code>$push</code> und <code>$addToSet</code> ist, dass <code>$addToSet</code> ein Element nicht dem Array hinzufügt, wenn es schon vorhanden ist.</aside>
+</section>
+
+	<section>
+		<h3><code>find + update = </code>?</h3>
+		<p class="small">Vor dem Update wird der <em>alte Zustand</em> des Dokuments zurückgeliefert:</p>
+
+		<h4><code>findOneAndUpdate( kriterium, update )</code></h4>
+		<pre><code class="javascript">db.kunden.findOneAndUpdate({"_id": 5}, {$set: {geboren:1973}})</code></pre>
+
+		<h4><code>findAndModify({query:{&hellip;}, update:{&hellip;} })</code></h4>
+		<pre><code class="javascript">db.kunden.findAndModify({query:{"_id": 5}, 
+                         update:{$set: {geboren:1973}}})</code></pre>
+
+<div class="fragment">
+		<p class="small">Erhöhe den Preis des günstigsten Produkts um 50ct und gib den neuen Zustand des geänderten Dokuments zurück:</p>
+		<pre><code class="javascript">db.produkte.findAndModify({query:{}, sort:{preis:1}, new:true,
+                           update:{$inc:{preis:0.5}}})</code></pre>
+</div>
+</section>
+
+<section>
+	<h3>Upsert</h3>
+	<p class="small">Einfügen, außer es gibt das Dokument schon, dann ändern!</p>
+	<pre><code class="javascript">db.kunden.update({name:"Tina"},
+                 {name:"Tina", geboren:1995},
+                 {upsert:true})</code></pre>
+
+	<pre><code class="javascript">db.kunden.save({_id:5, name:"Peter", geboren:1995})</code></pre>
+
+  <pre><code class="javascript">db.kunden.findAndModify({query:{name:"Mike"},
+              update:{name:"Mike", geboren:1995},
+              upsert:true})</code></pre>
+
+	<div class="poll fragment" style="bottom: -270px; width: 9.5cm;">
+		<h1>Die untere Query liefert null zurück, warum?</h1>
+				<ul>
+					<li data-poll="correct">Weil es noch keinen Mike gibt</li>
+					<li data-poll="correct">Weil new standardmäßig false ist</li>
+					<li data-poll="correct">Weil kein Dokument geändert wurde</li>
+					<li data-poll="correct">Weil ein Dokument eingefügt wurde</li>
+				</ul>
+		<h2></h2>
+	</div>
+
+	<aside class="notes">Es gibt in MongoDB mehrere Möglichkeiten, ein Upsert auszuführen. Entweder über die Option <code>{upsert:true}</code> im optionalen dritten Parameter einer <code>update</code>-, <code>updateOne</code>- oder<code>updateMany</code>-Anfrage. Oder man verwendet <code>save</code>, die Methode funktioniert wie <code>insert</code>, ersetzt das Dokument aber, falls schon eins mit der gegebenen <code>_id</code> existiert.</aside>
+</section>
+
+<section>
+	<h3>Multi-Update</h3>
+	<p class="small">Achtung: Alle bisherigen Beispiele updaten immer nur <em>ein</em> Dokument!</p>
+		<h4>Multi-Update:</h4>
+		<pre><code class="javascript">db.kunden.update({}, {$set: {telefon:[]}}, {multi:true})</code></pre>
+		<pre><code class="javascript">db.kunden.updateMany({}, {$set: {telefon:[]}})</code></pre>
+		</code></pre>
+</section>
+
 			</div>
 		</div>
 
