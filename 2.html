@@ -149,6 +149,30 @@ WriteResult({ "nInserted" : 1 })</code></pre>
 								</section>
 
 								<section>
+									<h3>MongoDB-Dokumente</h3>
+									<ul class="small" style="margin-bottom: 3mm;">
+										<li>Jedes Dokument hat das Feld <code>_id</code> (Primärschlüssel)</li>
+										<li>Datentypen: die 6 JSON-Typen + einige weitere</li>
+									</ul>
+
+									<div class="fragment">
+									<h4><code>Double</code> (64-bit-Zahl)</h4>
+									<p class="small" style="margin-top: -5mm;">Wird standardmäßig für Zahlen verwendet und kann zu Rundungsfehlern führen.</p>
+									<pre style="width:100%"><code class="javascript">> db.zahlen.insert( { _id: 9999999.4999999999 } )
+> db.zahlen.find()
+{ "_id" : 9999999.5 }</code></pre>
+</div>
+
+<div class="fragment">
+									<h4><code>NumberDecimal</code> (128-bit-Zahl)</h4>
+									<pre style="width:100%; margin-top: -5mm;"><code class="javascript">> db.zahlen.insert( { _id: NumberDecimal("9999999.4999999999") } )
+> db.zahlen.find()
+{ "_id" : NumberDecimal("9999999.4999999999") }</code></pre>
+</div>
+<aside class="notes">Es wird empfohlen, den Konstruktor von NumberDecimal mit einem String aufzurufen, nicht mit einer Zahl, da diese ja bereits ein Double ist und daher Genauigkeit verloren gehen kann.</aside>
+								</section>
+
+								<section>
 									<h2>BSON</h2>
 									<p class="small">Binary JSON</p>
 									<p class="small">Internes Speicherformat, was schnellere Suchen auf Dokumenten ermöglicht.</p>
@@ -348,6 +372,15 @@ Type "it" for more
 </section>
 
 <section>
+	<h3><code>cursor.allowDiskUse()</code></h3>
+	<p class="small">Sortierungen erfolgen in-memory. Limit für temporäre Daten: 100 MB</p>
+	<pre style="width: 100%;"><code class="javascript">db.bestellungen.find().sort({"zeit":-1})</code></pre>
+	<p style="font-size: 60%; margin-top: -3mm;"><i class="red">Error: Exceeded memory limit.</i></p> 
+
+	<pre style="width: 100%;"><code class="javascript">db.bestellungen.find().sort({"zeit":-1}).allowDiskUse()</code></pre>
+</section>
+
+<section>
 	<h3>Selektion</h3>
 	<div style="position: absolute; top: -1cm; right:5px; font-size:170px" class="green">&sigma;</div>
 	<pre style="width: 20cm; margin-left: 0;"><code class="javascript">db.produkte.find({"preis": 0.89})</code></pre>
@@ -410,6 +443,23 @@ Type "it" for more
 </section>
 
 <section>
+	<h3><code>db.collection.distinct</code></h3>
+	<p class="small" style="width: 103%;"><code class="javascript">{ "_id": 17, "bezeichnung": "Schokoriegel", "preis": 0.89,<br>
+&nbsp;&nbsp;"hersteller": "Monsterfood" }<br>
+{ "_id": 18, "bezeichnung": "Müsliriegel", "preis": 1.19,<br>
+&nbsp;&nbsp;"hersteller": "Monsterfood" }<br>
+{ "_id": 88, "bezeichnung": "Katzenfutter", "preis": 3.99,<br>
+&nbsp;&nbsp;"hersteller": "Catcat" }</code></p>
+		
+	<h4><code>db.collection.distinct(feld, [query])</code></h4>
+	<pre><code class="javascript">> db.produkte.distinct("hersteller")
+[ "Catcat", "Monsterfood" ]</code></pre>
+<pre><code class="javascript">> db.produkte.distinct("hersteller", {"preis":{$gt:2}})
+[ "Catcat" ]</code></pre>
+<aside class="notes">Mit distinct lassen sich die distinkten Werte eines Felds abrufen. Übergibt man als zweiten Parameter ein Selektionskriterium, werden nur diejenigen Dokumente betrachtet, die dieses Kriterium erfüllen.</aside>
+</section>
+
+<section>
 	<h3><code>insert</code> - Einfügen von Dokumenten</h3>
 	<p class="small">Das Feld <code>_id</code> ist Pflicht und eindeutig.<br>
 		Fehlt es, wird automatisch eine ObjectId generiert.</p>
@@ -461,7 +511,7 @@ db.kunden.update({"_id": kunde._id}, kunde);</code></pre>
 	<pre><code class="javascript">db.kunden.update({"_id": 5}, {$set: {geboren:1973}})</code></pre>
 
 	<div class="fragment" style="margin-top: 10mm;">
-		<h4><code>$push</code>, <code>$addToSet</code>, ... (für Arrays)</h4>
+		<h4><code>$push</code>, <code>$addToSet</code>, <code>$pull</code>, ... (für Arrays)</h4>
 		<pre><code class="javascript">db.kunden.update({"_id": 5}, {$push: {telefon:"0176123"}})</code></pre>
 	</div>
 
@@ -469,7 +519,7 @@ db.kunden.update({"_id": kunde._id}, kunde);</code></pre>
 </section>
 
 	<section>
-		<h3><code>find + update = </code>?</h3>
+		<h3><code>find + update</code></h3>
 		<p class="small">Vor dem Update wird der <em>alte Zustand</em> des Dokuments zurückgeliefert:</p>
 
 		<h4><code>findOneAndUpdate( kriterium, update )</code></h4>
@@ -519,7 +569,85 @@ db.kunden.update({"_id": kunde._id}, kunde);</code></pre>
 		<h4>Multi-Update:</h4>
 		<pre><code class="javascript">db.kunden.update({}, {$set: {telefon:[]}}, {multi:true})</code></pre>
 		<pre><code class="javascript">db.kunden.updateMany({}, {$set: {telefon:[]}})</code></pre>
-		</code></pre>
+		
+		<aside class="notes"><code>findAndModify</code> und <code>findOneAndUpdate</code> modifizieren immer nur ein Dokument (das erste, was sie finden können). Auch bei <code>update</code> ist das standardmäßig so, dort lässt sich aber die Option <code>{"multi":true}</code> verwenden, um Änderungen auf allen Dokumenten auszuführen, die das Query-Kriterium erfüllen.</aside>
+</section>
+
+<section>
+	<h3>Dokumente löschen</h3>
+	<h4><code>deleteOne</code></h4>
+	<pre><code class="javascript">db.kunden.deleteOne( {"name": "Peter" } )</code></pre>
+
+	<div class="fragment">
+	<h4><code>deleteMany</code></h4>
+	<pre><code class="javascript">db.kunden.deleteMany( {"geboren": {$lte: 1980} } )</code></pre>
+	<pre class="fragment"><code class="javascript">db.kunden.deleteMany( {} )   // löscht alle Kunden</code></pre>
+	</div>
+
+	<div class="fragment">
+		<h4><code>db.collection.drop()</code></h4>
+		<pre><code class="javascript">db.kunden.drop()</code></pre>
+	</div>
+	
+	<aside class="notes">Die oberen drei Kommandos löschen Dokumente aus der Collection, die Collection selbst bleibt aber bestehen. <code>drop()</code> entfernt die komplette Collection samt aller in ihr befindlichen Dokumente. Sollten momentan Indexe auf der zu droppenden Collection im Aufbau sein, wird dieser Vorgang erst gestoppt, dann wird die Collection entfernt.</aside>
+</section>
+
+<section>
+	<h3>Subdokumente</h3>
+	<p class="small" style="width: 103%;"><code class="javascript">{ _id:1, name:"Tina", ​geboren: { jahr: 1995, ort: "Ulm" }}​<br>
+{ _id:2, name:"Kai",​ geboren: { jahr: 1980, ort: "Ulm" }}</code></p>
+
+
+  <h4>Projektion</h4>
+	<pre style="margin-top:-5mm; width: 101%;"><code class="javascript">> db.kunden.find({}, {"geboren":{"jahr":1}})
+{ "_id" : 1, "geboren" : { "jahr" : 1995 } }
+{ "_id" : 2, "geboren" : { "jahr" : 1980 } }</code></pre>
+
+<div class="fragment">
+<h4>Selektion</h4>
+<pre style="margin-top:-5mm; width: 101%;"><code class="javascript">db.kunden.find({"geboren":{"jahr":1980, "ort":"Ulm"}}) // findet Kai
+db.kunden.find({"geboren":{"ort":"Ulm", "jahr":1980}}) // findet nichts
+db.kunden.find({"geboren":{"jahr":1980}})              // findet nichts</code></pre>
+<p class="small">&Rightarrow; Keine elegante Lösung</p>
+</div>
+
+	<aside class="notes">Die hier gezeigten Beispiele für Selektionen sollte man so nicht verwenden. Ein Dokument wird nämlich nur gefunden, wenn es das Subdokument genau wie angegeben enthält (keine weiteren Felder, Felder genau in der Reihenfolge). Auf der nächsten Folie ist der elegantere Weg beschrieben, und zwar mit der Dot-Notation.</aside>
+	</section>
+
+<section>
+	<h3>Dot-Notation</h3>
+	<h4>Projektion mit Dot-Notation</h4>
+	<pre style="width: 100%;"><code class="javascript">db.kunden.find({},{"geboren.jahr":1})</code></pre>
+	
+	<h4>Selektion mit Dot-Notation</h4>
+	<pre style="width: 100%;"><code class="javascript">db.kunden.find({"geboren.jahr":1980})                  // findet Kai</code></pre>
+
+	<h4>Änderungen in Subattributen</h4>
+	<pre style="width: 100%;"><code class="javascript">db.kunden.update( {_id: 1}, {$set:{"geboren.ort":"Regensburg"}} )</code></pre>
+	<aside class="notes"><code>"geboren.jahr"</code> muss unbedingt in Anführungszeichen wegen des Punkts.</aside>
+
+</section>
+
+<section>
+	<h3>Arrays</h3>
+
+	<p class="small" style="width: 103%;"><code class="javascript">{ "_id": 17, "bezeichnung": "Schokoriegel", "preis": 0.89,<br>
+&nbsp;&nbsp;"kategorien": ["Lebensmittel", "Süßwaren"] }<br>
+{ "_id": 88, "bezeichnung": "Katzenfutter", "preis": 3.99,<br>
+&nbsp;&nbsp;"kategorien": ["Tierbedarf"] }</code></p>
+
+<h4>Selektion</h4>
+<pre style="margin-top:-5mm; width: 100%;"><code class="javascript">db.produkte.find({kategorien:"Lebensmittel"}) // findet Schokoriegel</code></pre>
+
+<h4>Elemente hinzufügen / entfernen</h4>
+<pre style="margin-top:-5mm; width: 100%;"><code class="javascript">db.produkte.update({_id: 88}, {$push:{kategorien:"Katze"}})</code></pre>
+<pre style="width: 100%;"><code class="javascript">db.produkte.update({_id: 88}, {$addToSet:{kategorien:"Katze"}})</code></pre>
+<pre style="width: 100%;"><code class="javascript">db.produkte.update({_id: 88}, {$pull:{kategorien:"Katze"}})</code></pre>
+<aside class="notes">Eine normale (Gleichheits-)Selektion überprüft bei Array-Feldern, ob der Wert im Array vorhanden ist. <code>$push</code> fügt ein Element dem Array hinzu. Der Array kann dann Duplikate beinhalten. <code>$addToSet</code> fügt es nur hinzu, wenn es noch nicht drin ist. <code>$pull</code> entfernt alle Vorkommnisse des Elements im Array.</aside>
+</section>
+
+<section>
+	<h3>Dokumentenstruktur</h3>
 </section>
 
 			</div>
