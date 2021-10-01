@@ -158,18 +158,19 @@ WriteResult({ "nInserted" : 1 })</code></pre>
 									<div class="fragment">
 									<h4><code>Double</code> (64-bit-Zahl)</h4>
 									<p class="small" style="margin-top: -5mm;">Wird standardmäßig für Zahlen verwendet und kann zu Rundungsfehlern führen.</p>
-									<pre style="width:100%"><code class="javascript">> db.zahlen.insert( { _id: 9999999.4999999999 } )
-> db.zahlen.find()
-{ "_id" : 9999999.5 }</code></pre>
+									<pre style="width:103%"><code class="javascript">> db.produkte.insert( { _id: 7, preis: 9999999.4999999999 } )
+> db.produkte.findOne({ _id: 7 })
+{ "_id" : 7, "preis": 9999999.5 }</code></pre>
 </div>
 
 <div class="fragment">
-									<h4><code>NumberDecimal</code> (128-bit-Zahl)</h4>
-									<pre style="width:100%; margin-top: -5mm;"><code class="javascript">> db.zahlen.insert( { _id: NumberDecimal("9999999.4999999999") } )
-> db.zahlen.find()
-{ "_id" : NumberDecimal("9999999.4999999999") }</code></pre>
+									<h4><code>NumberDecimal</code> (128-bit-Zahl; exakte Genauigkeit)</h4>
+									<pre style="width:103%; margin-top: -5mm;"><code class="javascript">> db.produkte.save({_id: 7, preis: NumberDecimal("9999999.4999999999")})
+> db.produkte.findOne({ _id: 7 })
+{ "_id" : 7, "preis": NumberDecimal("9999999.4999999999") }</code></pre>
 </div>
-<aside class="notes">Es wird empfohlen, den Konstruktor von NumberDecimal mit einem String aufzurufen, nicht mit einer Zahl, da diese ja bereits ein Double ist und daher Genauigkeit verloren gehen kann.</aside>
+<aside class="notes">Bei Geldbeträgen (Preise, Kosten, ...) wird empfohlen, NumberDecimal zu verwenden.
+<br>Es wird empfohlen, den Konstruktor von NumberDecimal mit einem String aufzurufen, nicht mit einer Zahl, da diese ja bereits ein Double ist und daher Genauigkeit verloren gehen kann.</aside>
 								</section>
 
 								<section>
@@ -304,7 +305,7 @@ produkte</code></pre>
 									<h4><code>findOne([selektion], [projektion])</code></h4>
 									<p class="small">Liefert ein Dokument zurück, was das Selektionskriterium erfüllt.</p>
 									<pre class="fragment"><code class="javascript">> db.produkte.findOne()
-{ "_id" : 17, "bezeichnung" : "Schokoriegel", "preis" : 0.89 }</code></pre>
+{ "_id" : 17, "bezeichnung" : "Schokoriegel", "gewicht" : 50 }</code></pre>
 
 <pre class="fragment"><code class="javascript">> p = db.produkte.findOne({ "_id": 29 }, {"bezeichnung": 1})
 { "_id" : 29, "bezeichnung" : "Spülmaschinentabs" }
@@ -350,7 +351,7 @@ Type "it" for more
 {
   "_id" : 18,
   "bezeichnung" : "Müsliriegel",
-  "preis" : 1.19,
+  "preis" : NumberDecimal("1.19"),
   "hersteller" : {
     "firma" : "Monsterfood",
     "land" : "USA"
@@ -383,15 +384,15 @@ Type "it" for more
 <section>
 	<h3>Selektion</h3>
 	<div style="position: absolute; top: -1cm; right:5px; font-size:170px" class="green">&sigma;</div>
-	<pre style="width: 20cm; margin-left: 0;"><code class="javascript">db.produkte.find({"preis": 0.89})</code></pre>
+	<pre style="width: 20cm; margin-left: 0;"><code class="javascript">db.produkte.find({"gewicht": 50})</code></pre>
 	<div class="fragment">
 	<p class="small">Mehrere Kriterien &RightArrow; UND-Verknüpfung</p>
-	<pre style="width: 24cm; margin-left: 0; margin-top: -4mm;"><code class="javascript">db.produkte.find({"preis": 0.89, "bezeichnung": "Schokoriegel"})</code></pre>
+	<pre style="width: 24cm; margin-left: 0; margin-top: -4mm;"><code class="javascript">db.produkte.find({"gewicht": 50, "bezeichnung": "Schokoriegel"})</code></pre>
 </div>
 <div class="fragment">
 	<p class="small">Vergleichsoperatoren: <code>$eq</code>, <code>$gt</code>, <code>$gte</code>, <code>$in</code>, <code>$lt</code>, <code>$lte</code>, <code>$ne</code>, <code>$nin</code></p>
-	<pre style="width: 24cm; margin-left: 0; margin-top: -4mm;"><code class="javascript">db.produkte.find({"preis": { "$gt": 1.50 }})</code></pre>
-	<pre class="fragment" style="width: 24cm; margin-left: 0; margin-top: -4mm;"><code class="javascript">db.produkte.find({"preis": { "$gte": 1, "$lte":2 }})</code></pre>
+	<pre style="width: 24cm; margin-left: 0; margin-top: -4mm;"><code class="javascript">db.produkte.find({"preis": { "$gt": NumberDecimal("1") }})</code></pre>
+	<pre class="fragment" style="width: 24cm; margin-left: 0; margin-top: -4mm;"><code class="javascript">db.produkte.find({"gewicht": { "$gte": 50, "$lte":100 }})</code></pre>
 </div>
 <div class="fragment">
 	<p class="small">Logische Operatoren: <code>$and</code>, <code>$not</code>, <code>$nor</code>, <code>$or</code></p>
@@ -408,7 +409,7 @@ Type "it" for more
 			</ul>
 	<h2></h2>
 </div>
-<aside class="notes">Die hier gezeigten Anfragen finden (1) Produkte, die 89ct kosten, (2) Produkte die 89ct kosten und die Bezeichnung Schokoriegel haben, (3) mehr als 1.50 EUR kosten, (4) zwischen 1 und 2 EUR kosten, (5) entweder die Bezeichnung Schokoriegel oder Müsliriegel haben.</aside>	
+<aside class="notes">Die hier gezeigten Anfragen finden (1) Produkte, die 50g wiegen, (2) Produkte die 50g wiegen und die Bezeichnung Schokoriegel haben, (3) mehr als 1 EUR kosten, (4) zwischen 50 und 100 Gramm wiegen, (5) entweder die Bezeichnung Schokoriegel oder Müsliriegel haben.</aside>	
 </section>
 
 <section>
@@ -444,17 +445,17 @@ Type "it" for more
 
 <section>
 	<h3><code>db.collection.distinct</code></h3>
-	<p class="small" style="width: 103%;"><code class="javascript">{ "_id": 17, "bezeichnung": "Schokoriegel", "preis": 0.89,<br>
+	<p class="small" style="width: 103%;"><code class="javascript">{ "_id": 17, "bezeichnung": "Schokoriegel", "gewicht": 50,<br>
 &nbsp;&nbsp;"hersteller": "Monsterfood" }<br>
-{ "_id": 18, "bezeichnung": "Müsliriegel", "preis": 1.19,<br>
+{ "_id": 18, "bezeichnung": "Müsliriegel", "gewicht": 25,<br>
 &nbsp;&nbsp;"hersteller": "Monsterfood" }<br>
-{ "_id": 88, "bezeichnung": "Katzenfutter", "preis": 3.99,<br>
+{ "_id": 88, "bezeichnung": "Katzenfutter", "gewicht": 156,<br>
 &nbsp;&nbsp;"hersteller": "Catcat" }</code></p>
 		
 	<h4><code>db.collection.distinct(feld, [query])</code></h4>
 	<pre style="margin-top: -2mm;"><code class="javascript">> db.produkte.distinct("hersteller")
 [ "Catcat", "Monsterfood" ]</code></pre>
-<pre><code class="javascript">> db.produkte.distinct("hersteller", {"preis":{$gt:2}})
+<pre><code class="javascript">> db.produkte.distinct("hersteller", {"gewicht":{$gt:100}})
 [ "Catcat" ]</code></pre>
 <aside class="notes">Mit distinct lassen sich die distinkten Werte eines Felds abrufen. Übergibt man als zweiten Parameter ein Selektionskriterium, werden nur diejenigen Dokumente betrachtet, die dieses Kriterium erfüllen. <code>distinct</code> funktioniert auch für Subattribute und Array-Felder. Bei Arrays kommen die verschiedenen in den Arrays befindlichen Elemente heraus.</aside>
 </section>
@@ -624,6 +625,18 @@ db.kunden.find({"geboren":{"jahr":1980}})              // findet nichts</code></
 
 	<h4>Änderungen in Subattributen</h4>
 	<pre style="width: 100%;"><code class="javascript">db.kunden.update( {_id: 1}, {$set:{"geboren.ort":"Regensburg"}} )</code></pre>
+	
+	<div class="poll fragment" style="bottom:-230px;" data-fragment-index="1">
+		<h1>Wie könnte man die Änderung im unteren Update-Kommando anders formulieren?</h1>
+				<ul>
+						<li>{$set:{"geboren":"ort":"Regensburg"}}</li>
+						<li>{$set:{"geboren":{"ort":"Regensburg"}}}</li>
+						<li>{"geboren":{$set:{"ort":"Regensburg"}}}</li>
+						<li data-poll="correct">gar nicht</li>
+				</ul>
+		<h2></h2>
+	</div>
+	
 	<aside class="notes"><code>"geboren.jahr"</code> muss unbedingt in Anführungszeichen wegen des Punkts.</aside>
 
 </section>
@@ -631,9 +644,9 @@ db.kunden.find({"geboren":{"jahr":1980}})              // findet nichts</code></
 <section>
 	<h3>Arrays</h3>
 
-	<p class="small" style="width: 103%;"><code class="javascript">{ "_id": 17, "bezeichnung": "Schokoriegel", "preis": 0.89,<br>
+	<p class="small" style="width: 103%;"><code class="javascript">{ "_id": 17, "bezeichnung": "Schokoriegel",<br>
 &nbsp;&nbsp;"kategorien": ["Lebensmittel", "Süßwaren"] }<br>
-{ "_id": 88, "bezeichnung": "Katzenfutter", "preis": 3.99,<br>
+{ "_id": 88, "bezeichnung": "Katzenfutter",<br>
 &nbsp;&nbsp;"kategorien": ["Tierbedarf"] }</code></p>
 
 <h4>Selektion</h4>
@@ -702,11 +715,11 @@ db.kunden.find({"geboren":{"jahr":1980}})              // findet nichts</code></
 						]]
 												</div>
 
-												<div class="fragment" style="margin-top: -10mm;">
+												<div class="fragment" style="margin-top: -10mm; max-height: 18cm;">
 		
 																<pre style="width: 16cm;"><code class="javascript">{                   // Collection "produkte"
  "_id": 17, "bezeichnung": "Schokoriegel", 
- "preis": 0.89, 
+ "preis": NumberDecimal("0.89"), 
  "hersteller": { 
    "firma": "Monsterfood", 
    "land": "USA" 
@@ -719,12 +732,22 @@ db.kunden.find({"geboren":{"jahr":1980}})              // findet nichts</code></
  "produkte": [ {
   "produktnr": 17,
   "bezeichnung": "Schokoriegel",
-  "preis": 0.89
+  "preis": NumberDecimal("0.89")
  } ]
 }</code></pre></div>
 
 														</div>
 										</div>
+	<div class="poll fragment" style="bottom:20px;">
+		<h1>In der oberen Modellierung: Finde alle Produkte vom Hersteller Monsterfood!</h1>
+				<ul>
+						<li>db.produkte.find( {"hersteller":"Monsterfood"})</li>
+						<li data-poll="correct">db.produkte.find( {"hersteller.firma":"Monsterfood"})</li>
+						<li>db.produkte.find({"hersteller":{"firma":"Monsterfood"}})</li>
+						<li>Nicht möglich</li>
+				</ul>
+		<h2></h2>
+	</div>
 <aside class="notes">Beide hier gezeigten Ansätze nutzen die denormalisierte Speicherung (Embedding). Daher ist nur eine einzige Kollektion nötig. Der obere Ansatz ist gut, wenn die Anwendung oft Produkte anzeigt samt ihren Herstellerinfos; der untere, wenn oft alle Produkte eines Herstellers gesucht werden. Der untere Ansatz vermeidet Redundanz, da oben derselbe Hersteller an mehreren Stellen stehen wird.</aside>
 </section>
 
@@ -754,7 +777,7 @@ db.kunden.find({"geboren":{"jahr":1980}})              // findet nichts</code></
 																<pre style="width: 16cm;"><code class="javascript">{                   // Collection "produkte"
  "_id": 17, 
  "bezeichnung": "Schokoriegel", 
- "preis": 0.89, 
+ "preis": NumberDecimal("0.89"), 
  "bewertungen": [ 
   { "sterne": 3, "text": "Schmeckt okay." },
   { "sterne": 5, "text": "Der Hammer!" }
@@ -818,15 +841,28 @@ db.kunden.find({"geboren":{"jahr":1980}})              // findet nichts</code></
 <p class="small" style="margin-top: -4mm; margin-bottom: -4mm;">oder:</p>
 <pre style="width: 16cm;"><code class="javascript">{                   // Collection "produkte"
  "_id": 17, "bezeichnung": "Schokoriegel", 
- "preis": 0.89, "haendler": [ "Shop25", "Q" ]
+ "preis": ..., "haendler": [ "Shop25", "Q" ]
 }</code></pre></div>
 
 <div class="fragment">
 	<p class="small" style="margin-top: -4mm; margin-bottom: -4mm;">oder: 2-way Embedding (die unteren 2 Varianten).</p>
+</div>
+</div>
+
+	<div class="poll fragment" style="bottom:20px;">
+		<h1>In der dritten Modellierung: Finde alle Produkte, die der Händler Shop25 anbietet!</h1>
+				<ul>
+						<li data-poll="correct">db.produkte.find( {"haendler":"Shop25"})</li>
+						<li>db.produkte.find( {"haendler":["Shop25"]})</li>
+						<li>db.produkte.find( [{"haendler":"Shop25"}])</li>
+						<li>Nicht möglich</li>
+				</ul>
+		<h2></h2>
+	</div>
+
 
 	<aside class="notes">Die obere Modellierung ähnelt dem Ansatz aus relationalen DBs. In dem Fall wird zusätzlich eine Produkte- und eine Händler-Collection benötigt. Damit splittet man die N:M-Beziehung in zwei 1:N-Beziehungen. Die anderen Ansätze verwenden Arrays mit Referenzen. Hier muss man sich entscheiden, ob man zu jedem Produkt die Händler finden will, zu jedem Händler seine Produkte oder beides.</aside>
-														</div>
-										</div>
+													
 </section>
 
 <section>
