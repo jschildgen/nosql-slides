@@ -452,11 +452,11 @@ Type "it" for more
 &nbsp;&nbsp;"hersteller": "Catcat" }</code></p>
 		
 	<h4><code>db.collection.distinct(feld, [query])</code></h4>
-	<pre><code class="javascript">> db.produkte.distinct("hersteller")
+	<pre style="margin-top: -2mm;"><code class="javascript">> db.produkte.distinct("hersteller")
 [ "Catcat", "Monsterfood" ]</code></pre>
 <pre><code class="javascript">> db.produkte.distinct("hersteller", {"preis":{$gt:2}})
 [ "Catcat" ]</code></pre>
-<aside class="notes">Mit distinct lassen sich die distinkten Werte eines Felds abrufen. Übergibt man als zweiten Parameter ein Selektionskriterium, werden nur diejenigen Dokumente betrachtet, die dieses Kriterium erfüllen.</aside>
+<aside class="notes">Mit distinct lassen sich die distinkten Werte eines Felds abrufen. Übergibt man als zweiten Parameter ein Selektionskriterium, werden nur diejenigen Dokumente betrachtet, die dieses Kriterium erfüllen. <code>distinct</code> funktioniert auch für Subattribute und Array-Felder. Bei Arrays kommen die verschiedenen in den Arrays befindlichen Elemente heraus.</aside>
 </section>
 
 <section>
@@ -647,7 +647,214 @@ db.kunden.find({"geboren":{"jahr":1980}})              // findet nichts</code></
 </section>
 
 <section>
-	<h3>Dokumentenstruktur</h3>
+	<h3>Data-Model-Design</h3>
+	<p class="small">Es ist wichtig, eine zur Anwendung passende Dokumentenstruktur zu wählen.</p>
+	<h4>Embedding (Denormalisierte Speicherung)</h4>
+	<p class="small" style="margin-top: -5mm;">
+		Alles zusammen speichern, was zusammen gehört. (Limit: 16 MB / Dokument)
+	</p>
+	<pre style="margin-top: -3mm;"><code class="json">{ "_id": 4, "name":"Ute", 
+  "adresse": 
+  { "strasse":"Bergstr. 25", "plz": 12345, "ort": "Teststadt" }
+}</code></pre>
+<p class="small" style="margin-top: -3mm;">
+	(+) sehr performant (alles in einem Read-Request), atomare Schreiboperationen.
+</p>
+
+<h4>Referenzieren (Normalisierte Speicherung)</h4>
+<div class="columns" style="margin-top: -8mm;">
+	<div>
+		<pre style="width: 9.8cm;"><code class="json">{ "_id": 4, "name":"Ute" }</code></pre>
+	</div>
+	<div>
+		<pre style="width: 14.3cm;"><code class="json">{ "_id": ObjectId("..."), 
+"kunde_id":4, "strasse":"Bergstr. 25", 
+"plz": 12345, "ort": "Teststadt" }</code></pre>
+	</div>
+
+	<aside class="notes">Der untere Ansatz gleicht der typischen Datenmodellierung in relationalen Datenbanken mittels Fremdschlüsseln. In MongoDB ist es aber meist sinnvoller, alles zusammengehörige in ein einziges Dokument einzubetten (z. B. alle Bewertungen in ein Produkt-Dokument, alle Kommentare in ein Blogbeitrag-Element, etc.).</aside>
+</div>
+</section>
+
+<section>
+	<h3>1:N-Beziehungen</h3>
+	<div class="columns">
+		<div class="erd" style="margin-top:5mm; width: 350px;">
+						[[
+						 { _e: "Produkt", pos: [30, 100],
+							 attributes: [
+								{ _a:"Produktnr", pos: [15, 25], options:["primary"] },
+								{ _a:"Bezeichnung", pos: [134, 25] },
+								{ _a:"Preis", pos: [200, 106] }
+							 ]
+						 },
+						 { _e: "Hersteller", pos: [30, 304],
+							 attributes: [
+								{ _a:"Firma", pos: [200, 280], options:["primary"] },
+								{ _a:"Land", pos: [200, 345] }
+							 ]
+						 }
+						],
+						[
+						 { _r: "ist von",
+							 _e: ["Produkt", "Hersteller"],
+							 card: ["N", "1"]      }
+						]]
+												</div>
+
+												<div class="fragment" style="margin-top: -10mm;">
+		
+																<pre style="width: 16cm;"><code class="javascript">{                   // Collection "produkte"
+ "_id": 17, "bezeichnung": "Schokoriegel", 
+ "preis": 0.89, 
+ "hersteller": { 
+   "firma": "Monsterfood", 
+   "land": "USA" 
+ }
+}</code></pre>
+<div class="fragment">
+<p class="small" style="margin-top: -3mm; margin-bottom: -3mm;">oder:</p>
+<pre style="width: 16cm;"><code class="javascript">{                 // Collection "hersteller"
+ "_id": "Monsterfood", "land": "USA",
+ "produkte": [ {
+  "produktnr": 17,
+  "bezeichnung": "Schokoriegel",
+  "preis": 0.89
+ } ]
+}</code></pre></div>
+
+														</div>
+										</div>
+<aside class="notes">Beide hier gezeigten Ansätze nutzen die denormalisierte Speicherung (Embedding). Daher ist nur eine einzige Kollektion nötig. Der obere Ansatz ist gut, wenn die Anwendung oft Produkte anzeigt samt ihren Herstellerinfos; der untere, wenn oft alle Produkte eines Herstellers gesucht werden. Der untere Ansatz vermeidet Redundanz, da oben derselbe Hersteller an mehreren Stellen stehen wird.</aside>
+</section>
+
+<section>
+	<h3>Embedding</h3>
+	<div class="columns">
+		<div class="erd" style="margin-top:5mm; width: 350px; max-height: 8cm;">
+						[[
+						 { _e: "Produkt", pos: [30, 100],
+							 attributes: [
+								{ _a:"Produktnr", pos: [15, 25], options:["primary"] },
+								{ _a:"Bezeichnung", pos: [134, 25] },
+								{ _a:"Preis", pos: [200, 106] },
+							  { _a:"Bewertungen", "options": ["multi"], pos: [58, 177],
+							     attributes: [
+							     	{ _a:"Sterne", pos: [22, 244] },
+								    { _a:"Text", pos: [134, 244] }
+							     ]
+						    }
+						]}],
+						[
+						]]
+												</div>
+
+												<div class="fragment" style="margin-top: 0mm;">
+		
+																<pre style="width: 16cm;"><code class="javascript">{                   // Collection "produkte"
+ "_id": 17, 
+ "bezeichnung": "Schokoriegel", 
+ "preis": 0.89, 
+ "bewertungen": [ 
+  { "sterne": 3, "text": "Schmeckt okay." },
+  { "sterne": 5, "text": "Der Hammer!" }
+ ]
+}</code></pre>
+<div class="fragment">
+<p class="small">(-) Dokument kann extrem groß werden.</p>
+</div>
+
+								</div>
+				</div>
+
+		<div class="fragment">
+		<h4>Subset-Pattern</h4>
+		<p class="small" style="margin-top: -5mm;">Erste 10 Bewertungen embedden. Separate Collection mit allen Bewertungen.</p>
+		<pre style="margin-top: -3mm;"><code class="javascript">{ "_id": ObjectId("..."),           // Collection "bewertungen"
+  "produkt_id": 17, "sterne": 3, "text": "Schmeckt okay." }</code></pre>
+</div>
+	<aside class="notes">Das Subset-Pattern ist ein Kompromiss. Man kann mit einer Anfrage sehr performant die Produktdetails und die ersten 10 Bewertungen abrufen. Dennoch bleiben die Dokumente klein. Wegen der doppelten Speicherungen müssen manche Bewertungen aber an mehreren Stellen bearbeitet werden.</aside>
+</section>
+
+<section>
+	<h3>N:M-Beziehungen</h3>
+	<div class="columns">
+		<div class="erd" style="margin-top:5mm; width: 350px;">
+						[[
+						 { _e: "Produkt", pos: [30, 100],
+							 attributes: [
+								{ _a:"Produktnr", pos: [15, 25], options:["primary"] },
+								{ _a:"Bezeichnung", pos: [134, 25] },
+								{ _a:"Preis", pos: [200, 106] }
+							 ]
+						 },
+						 { _e: "Händler", pos: [30, 304],
+							 attributes: [
+								{ _a:"Händler", pos: [200, 280], options:["primary"] },
+								{ _a:"Telefon", pos: [200, 345], options:["multi"] }
+							 ]
+						 }
+						],
+						[
+						 { _r: "wird\nangeboten\nvon",
+							 _e: ["Produkt", "Händler"],
+							 card: ["N", "M"]      }
+						]]
+												</div>
+
+												<div class="fragment" style="margin-top: -10mm;">
+		
+																<pre style="width: 16cm;"><code class="javascript">{          // Collection "haendler_produkte"
+ "_id": 
+ {"produkt_id": 17, "haendler_id": 101}
+}</code></pre>
+<div class="fragment">
+<p class="small" style="margin-top: -4mm; margin-bottom: -4mm;">oder:</p>
+<pre style="width: 16cm;"><code class="javascript">{                   // Collection "haendler"
+ "_id": "Shop25", "telefon": ["0171123"],
+ "produkte": [ 17, 18, 29 ]
+}</code></pre></div>
+<div class="fragment">
+<p class="small" style="margin-top: -4mm; margin-bottom: -4mm;">oder:</p>
+<pre style="width: 16cm;"><code class="javascript">{                   // Collection "produkte"
+ "_id": 17, "bezeichnung": "Schokoriegel", 
+ "preis": 0.89, "haendler": [ "Shop25", "Q" ]
+}</code></pre></div>
+
+<div class="fragment">
+	<p class="small" style="margin-top: -4mm; margin-bottom: -4mm;">oder: 2-way Embedding (die unteren 2 Varianten).</p>
+
+	<aside class="notes">Die obere Modellierung ähnelt dem Ansatz aus relationalen DBs. In dem Fall wird zusätzlich eine Produkte- und eine Händler-Collection benötigt. Damit splittet man die N:M-Beziehung in zwei 1:N-Beziehungen. Die anderen Ansätze verwenden Arrays mit Referenzen. Hier muss man sich entscheiden, ob man zu jedem Produkt die Händler finden will, zu jedem Händler seine Produkte oder beides.</aside>
+														</div>
+										</div>
+</section>
+
+<section>
+	<h3>Baumstrukturen</h3>
+	<div class="columns">
+		<div style="margin-top:5mm; width: 350px;">
+						<img src="img/2/er_unterkategorie.png" alt="Rekursive Beziehung" class="noborder" style="width: 200px;">
+												</div>
+
+												<div class="fragment" style="width: 16cm;">
+														<h4 style="margin-bottom: -5mm;">Parent-Referenz:</h4>
+														<pre style="width: 16cm;"><code class="javascript">{ "_id": "Saft", "parent": "Getränke" }</code></pre>
+
+														<div class="fragment">
+															<h4 style="margin-bottom: -5mm;">Child-Referenzen:</h4>
+															<pre style="width: 16cm;"><code class="javascript">{ "_id": "Getränke", 
+  "children": ["Saft", "Wasser", "Bier"] }</code></pre>
+															</div>
+
+															<div class="fragment">
+																<h4 style="margin-bottom: -5mm;">Array mit Vorfahren:</h4>
+																<pre style="width: 16cm;"><code class="javascript">{ "_id": "Saft", "parent": "Getränke",
+"ancestors": ["Lebensmittel", "Getränke"] }</code></pre>
+																</div>
+														</div>
+										</div>
+<aside class="notes">Die oberste Kategorie hat <code>"parent":null</code>, die Blätter des Baumes <code>children:[]</code>. Sowohl Parent- als auch Child-Referenzen eignen sich, um schnell die Ober- als auch Unterkategorie einer Kategorie zu finden. Der untere Ansatz (Array mit Vorfahren) eignet sich, um schnell, alle Überkategorien. Auch alle Unterkategorien sind schnell gefunden: <code>db.kategorien.find({"ancestors":"Lebensmittel"})</code> Es wurde zusätzlich das Feld <code>parent</code> eingeführt, um die direkte Überkategorie anzugeben.<br>
+Die auf dieser und den vorherigen Folien präsentierten Modellierungsalternativen sind nicht vollständig. Es gibt noch jede Menge weitere Möglichkeiten, gleiche Sachverhalte zu modellieren, mit jeweils ihren Vor- und Nachteilen.</aside>
 </section>
 
 			</div>
