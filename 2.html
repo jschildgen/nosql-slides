@@ -86,7 +86,7 @@ choco install mongodb                   # Windows (Chocolatey)</code></pre>
 <div class="fragment">
 									<p class="small">Manuelle Installation:</p>
 									<ul class="small">
-									<li><a href="https://www.mongodb.com/" target="_blank">mongodb.com</a> &rightarrow; Kostenlos testen &rightarrow; On-premises &rightarrow; MongoDB Community Server &rightarrow; Windows &rightarrow; msi / Ubuntu &rightarrow; shell (deb)</li>
+									<li><a href="https://www.mongodb.com/" target="_blank">mongodb.com</a> &rightarrow; Try Free &rightarrow; On-premises &rightarrow; MongoDB Community Server &rightarrow; Windows &rightarrow; msi / Ubuntu &rightarrow; shell (deb)</li>
 									</ul>
 </div>									
 <div class="fragment">
@@ -282,22 +282,49 @@ WriteResult({ "nInserted" : 1 })</code></pre>
 								                 eine Datenbank beinhaltet Collections,<br>
 																 eine Collection speichert Dokumente.</p>
 
-									<pre class="fragment" style="width: 17cm; margin-left: 0cm;"><code class="javascript">> db
-test
-
-> show dbs
+									<pre style="width: 17cm; margin-left: 0cm; margin-top:-3mm"><code class="javascript">> db
+test</code></pre>
+<pre style="width: 17cm; margin-left: 0cm; margin-top:-3mm;"><code class="javascript">> show dbs
 admin    0.000GB
 config   0.000GB
 local    0.000GB
-webshop  0.000GB
-
-> use webshop
-switched to db webshop
-
-> show collections
+webshop  0.000GB</code></pre>
+<pre style="width: 17cm; margin-left: 0cm; margin-top:-3mm;"><code class="javascript">> use webshop
+switched to db webshop</code></pre>
+<pre style="width: 17cm; margin-left: 0cm; margin-top:-3mm;"><code class="javascript">> show collections
 produkte</code></pre>
 
 <aside class="notes">Diese Folie zeigt vier Mongo-Shell-Kommandos. <code>db</code> zeigt, welche Datenbank aktuell ausgewählt ist, <code>show dbs</code> zeigt alle Datenbanken an, mit <code>use</code> kann die Datenbank gewechselt werden. Man kann auch zu einer Datenbank wechseln, die es noch gar nicht gibt. Sobald man darin zum ersten Mal schreibt, legt MongoDB die Datenbank automatisch an. <code>show collections</code> listet alle Collections in der aktuell geöffneten DB. </aside>
+								</section>
+
+								<section>
+									<h3>MongoDB Database Tools</h3>
+									<p class="small">Sammlung verschiedener Kommandozeilentools</p>
+									<p class="small"><a href="https://www.mongodb.com/" target="_blank">mongodb.com</a> &rightarrow; Try Free &rightarrow; Tools &rightarrow; MongoDB Database Tools</p>
+									<ul class="small">
+										<li><code>mongodump</code> / <code>mongorestore</code> - Export / Import im Binärformat</li>
+										<li><code>mongoexport</code> / <code>mongoimport</code> - Export / Import von JSON-Textdateien</li>
+										<li><code>mongofiles</code> - Dateiverwaltung in GridFS</li>
+										<li><code>mongostat</code> - Zeigt aktuelle Aktivität (Anzahl Queries, RAM-Nutzung, ...)</li>
+										<li><code>mongotop</code> - Zeigt, wie viel Zeit MongoDB mit Lesen und Schreiben verbringt</li>
+									</ul>
+
+									<pre style="width: 100%;"><code class="bash">./mongoimport --db=webshop --collection=produkte --file=produkte.json</code></pre>
+									
+									<aside class="notes"><code>mongoimport</code> importiert standardmäßig JSON-Dateien, kann aber auch CSV-Dateien importieren.</aside>
+								</section>
+
+								<section>
+									<h3>MongoDB Compass</h3>
+									<p class="small"><a href="https://www.mongodb.com/" target="_blank">mongodb.com</a> &rightarrow; Try Free &rightarrow; Tools &rightarrow; MongoDB Compass</p>
+										<img src="img/2/mongodb_compass.png" alt="MongoDB Compass" class="noborder stretch" style="margin-top:-5mm">
+										<aside class="notes">MongoDB Compass ist ein GUI-Client für MongoDB. Es eignet sich gut, um die Datenbank explorativ zu erkunden. Links im DB-Browser sieht man alle DBs und Collections. Rechts werden die Dokumente einer Collection angezeigt, sie lassen sich an Ort und Stelle modifizieren.</aside>
+								</section>
+
+								<section>
+									<h3>MongoDB Compass: Schema-Analyse</h3>
+										<img src="img/2/mongodb_compass_schema.png" alt="MongoDB Compass" class="noborder stretch" style="margin-top:-5mm">
+										<aside class="notes">Da MongoDB-Dokumente kein festes Schema besitzen, ist das Schema-Analyse-Feature hilfreich, um ein Gefühl für die Struktur der in einer Collection gespeicherten Dokumente zu bekommen. Es zeigt für jedes Feld typische Werte, Datentypen, Häufigkeitsverteilungen, Array-Längen (min, max, avg), etc.</aside>
 								</section>
 
 								<section>
@@ -892,6 +919,62 @@ db.kunden.find({"geboren":{"jahr":1980}})              // findet nichts</code></
 <aside class="notes">Die oberste Kategorie hat <code>"parent":null</code>, die Blätter des Baumes <code>children:[]</code>. Sowohl Parent- als auch Child-Referenzen eignen sich, um schnell die Ober- als auch Unterkategorie einer Kategorie zu finden. Der untere Ansatz (Array mit Vorfahren) eignet sich, um schnell, alle Überkategorien. Auch alle Unterkategorien sind schnell gefunden: <code>db.kategorien.find({"ancestors":"Lebensmittel"})</code> Es wurde zusätzlich das Feld <code>parent</code> eingeführt, um die direkte Überkategorie anzugeben.<br>
 Die auf dieser und den vorherigen Folien präsentierten Modellierungsalternativen sind nicht vollständig. Es gibt noch jede Menge weitere Möglichkeiten, gleiche Sachverhalte zu modellieren, mit jeweils ihren Vor- und Nachteilen.</aside>
 </section>
+
+<section>
+	<h3>GridFS</h3>
+
+	<div style="position: absolute; right: 5mm; top: 2cm">
+		<img src="img/2/GridFS-upload.png" alt="GridFS" style="width: 14cm;" class="noborder">
+		<p style="font-size: 50%; margin-top: -1.2cm; margin-left: 1.5cm;">Quelle: docs.mongodb.com</p>
+	</div>
+
+	<p class="small">Speichern von Dateien in MongoDB<br>(BLOBs, binary large objects)</p>
+	<p class="small">
+		(+) gut für Dateien &gt; 16 MB<br>
+		(+) häppchenweises Lesen möglich<br>
+		(+) alle Vorteile von MongoDB<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(Replikation, Sharding, ...)
+	
+	<pre style="margin-left: 0; width: 10cm;"><code class="plaintext">./mongofiles put video.mp4</code></pre>
+	<pre style="margin-left: 0; width: 10cm;"><code class="plaintext">./mongofiles list
+video.mp4   85209330</code></pre>
+
+	<aside class="notes">Kleinere Mengen von Binärdaten können auch einfach innerhalb von MongoDB-Dokumenten gespeichert werden, dazu gibt es den BSON-Datentypen BinData. MongoDB-Dokumente haben aber eine Maximalgröße von 16 MB. Sollen größere Datenmengen gespeichert werden, bietet MongoDB die Möglichkeit, diese ins GridFS auszulagern. Dateien, die in GridFS-Buckets hochgeladen werden, werden in kleinere Chunks gesplittet (standardmäßig jeweils 255 KB groß) und in die Collection <code>fs.chunks</code> gespeichert, Metadaten über die Dateien landen in <code>fs.files</code>.<br>
+Das Kommandozeilenprogramm <code>mongofiles</code> ist Teil der MongoDB Database Tools.</aside>
+</section>
+
+<section>
+	<h3>GridFS</h3>
+	<pre><code class="javascript">> db.fs.files.findOne()
+{
+ "_id" : ObjectId("6157e81901daa68126160e36"),
+ "length" : NumberLong(85209330),
+ "chunkSize" : 261120,
+ "uploadDate" : ISODate("2021-10-02T05:03:22.546Z"),
+ "filename" : "video.mp4",
+ "metadata" : { }
+}</code></pre>
+
+<pre><code class="javascript">> db.fs.chunks.findOne()
+{
+ "_id" : ObjectId("6157e81901daa68126160e37"),
+ "files_id" : ObjectId("6157e81901daa68126160e36"),
+ "n" : 0,
+ "data": BinData(...)
+}</code></pre>
+
+<pre><code class="javascript">> db.produkte.findOne({ "_id" : 18 })
+{ "_id" : 18, "bezeichnung" : "Müsliriegel",
+ "preis" : NumberDecimal("1.19"),
+ "video": ObjectId("6157e81901daa68126160e36") }</code></pre>
+</section>
+
+
+<!-- Move to Performance Chapter
+<section>
+	<h3>WiredTiger Storage-Engine</h3>
+	<aside class="notes">Eine Storage-Engine legt fest, wie die DB-Daten auf der Festplatte gespeichert werden. MongoDB verwendet seit Version 3.2 standardmäßig WiredTiger.</aside>
+</section>
+-->
 
 			</div>
 		</div>
