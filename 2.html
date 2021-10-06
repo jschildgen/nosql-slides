@@ -41,7 +41,7 @@
                 </section>
                 
 								<section>
-									<h3>Ziel der Vorlesung</h3>
+									<h3>Ziele der Vorlesung</h3>
 									
 									<ul class="small">
 										<li>Konzepte von NoSQL-Datenbanken am Beispiel von MongoDB lernen
@@ -687,7 +687,7 @@ db.kunden.find({"geboren":{"jahr":1980}})              // findet nichts</code></
 </section>
 
 <section>
-	<h3>Data-Model-Design</h3>
+	<h3>Datenmodellierung</h3>
 	<p class="small">Es ist wichtig, eine zur Anwendung passende Dokumentenstruktur zu wählen.</p>
 	<h4>Embedding (Denormalisierte Speicherung)</h4>
 	<p class="small" style="margin-top: -5mm;">
@@ -975,6 +975,20 @@ Das Kommandozeilenprogramm <code>mongofiles</code> ist Teil der MongoDB Database
 	<aside class="notes">Eine Storage-Engine legt fest, wie die DB-Daten auf der Festplatte gespeichert werden. MongoDB verwendet seit Version 3.2 standardmäßig WiredTiger.</aside>
 </section>
 -->
+
+<section>
+	<h3>Zusammenfassung</h3>
+	<ul class="small">
+		<li><code>mongod</code>, <code>mongo</code>, <code>mongoimport</code>, <code>mongodump</code>, ...</li>
+		<li>JSON, BSON, Datentypen</li>
+		<li><code>find</code>, <code>findOne</code>: Selektion, Projektion, <code>.sort</code>, <code>.limit</code>, <code>.count()</code>, ...</li>
+		<li><code>insert</code>, <code>delete</code>, <code>update</code>, <code>updateMany</code>, Modifikatoren: <code>$set</code>, <code>$push</code>, ...</li>
+		<li>Subdokumente, Dot-Notation</li>
+		<li>Arrays</li>
+		<li>Datenmodellierung: Referenzen vs. Embedding</li>
+		<li>GridFS</li>
+	</ul>
+</section>
 
 			</div>
 		</div>
