@@ -42,24 +42,253 @@
                 
 								<section>
 									<h3>Anfragepläne</h3>
-									<h4>Eingabe: Query</h4>
-									<pre><code class="javascript">db.produkte.find({"preis": { "$gt": NumberDecimal("1") }})</code></pre>
+									<p class="small">Eingabe: Query</p>
+									<pre style="margin-top: -3mm;"><code class="javascript">db.produkte.find({"preis": { "$lt": NumberDecimal("1") }})</code></pre>
 									
-									<h4>1. Anfragepläne generieren</h4>
+									<p class="small">1. Anfragepläne generieren</p>
 									<div class="columns">
-										<div style="text-align: center; font-size: 66%;"><i class="fas fa-scroll red" style="font-size:400%;"></i><br>Plan A</div>
-										<div style="text-align: center; font-size: 66%;"><i class="fas fa-scroll green" style="font-size:400%;"></i><br>Plan B</div>
-										<div style="text-align: center; font-size: 66%;"><i class="fas fa-scroll blue" style="font-size:400%;"></i><br>Plan C</div>
+										<div style="text-align: center; font-size: 50%;"><i class="fas fa-scroll red" style="font-size:400%;"></i><br>Plan A</div>
+										<div style="text-align: center; font-size: 50%;"><i class="fas fa-scroll green" style="font-size:400%;"></i><br>Plan B</div>
+										<div style="text-align: center; font-size: 50%;"><i class="fas fa-scroll blue" style="font-size:400%;"></i><br>Plan C</div>
 									</div>
 
-									<h4>2. Besten Plan auswählen</h4>
+									<p class="small">2. Besten Plan auswählen</p>
 									<div class="columns">
-										<div style="text-align: center; font-size: 66%;"><i class="fas fa-scroll blue" style="font-size:400%;"></i><br>Plan C</div>
+										<div style="text-align: center; font-size: 50%;"><i class="fas fa-scroll blue" style="font-size:400%;"></i><br>Plan C</div>
 									</div>
 
-									<h4>3. Plan ausführen</h4>
+									<p class="small">3. Plan ausführen</p>
+
+									<aside class="notes">Bei jeder eingehenden Anfrage erstellt MongoDB Anfragepläne, die beschreiben, wie die Anfrage beantwortet werden kann. Letztendlich wird sich für einen Plan entschieden – den Winning Plan – und dieser wird ausgeführt.​</aside>
 								</section>
 
+								<section>
+									<h3><code>explain</code></h3>
+									<pre style="width: 99%;"><code class="javascript">db.produkte.explain().find({"preis": { "$lt": NumberDecimal("1") }})</code></pre>
+									<pre><code class="javascript" style="max-height: 45cm;">{
+"queryPlanner" : {
+ "namespace" : "webshop.produkte",
+// ...
+ "winningPlan" : {
+  "stage" : "COLLSCAN",
+  "filter" : {
+    "preis" : {
+      "$lt" : NumberDecimal("1")
+    }
+  },
+  "direction" : "forward"
+},
+"rejectedPlans" : [ ],
+// ...
+"ok" : 1
+}</code></pre>
+<aside class="notes"><code>db.produkte.find(...).explain()</code> funktioniert ebenfalls (<code>cursor.explain()</code>). <code>db.collection.explain()</code> liefert ein sogenanntes <em>explainable Object</em></code>. Dieses zeigt den winning Plan für eine Anfrage. Der hier gezeigte Plan führt einen Collection-Scan aus.</aside>
+								</section>
+
+<section>
+	<h3>Ausführungsstatistiken</h3>
+	<p class="small"><code>explain()</code> führt die Anfrage nicht wirklich aus,<br><code>explain("executionStats")​</code> schon.</p>
+	<pre style="width: 99%;"><code class="javascript">db.produkte.explain("executionStats")
+.find({"preis": { "$lt": NumberDecimal("1") }})</code></pre>
+<pre><code class="javascript">{
+// ...
+"executionStats" : {
+ "executionSuccess" : true,
+ "nReturned" : 99,
+ "executionTimeMillis" : 79,
+ "totalKeysExamined" : 0,
+ "totalDocsExamined" : 100000,
+ "executionStages" : {
+  "stage" : "COLLSCAN",
+  // ...
+ }
+}</code></pre>
+<aside class="notes">Wird die Option "executionStats" übergeben, beinhaltet der Explain-Plan auch Statistiken über die Ausführung: Wie viele Dokumente kommen bei jedem einzelnen Schritt raus, werden angeschaut, wie viele Millisekunden dauert es, etc. Diese Werte hängen von den tatsächlichen Daten ab während das normale <code>explain()</code> die Daten gar nicht anschaut. Zum Sammeln der Ausführungsstatistiken wird die Anfrage ausgeführt und dabei die Zahlen gesammelt. Die Statistiken oben betreffen den ganzen Plan, also z.B. die Gesamtlaufzeit der Anfrage. In <code>executionStages</code> stehen die gleichen (und weitere) Statistiken für die einzelnen Abschnitte der Anfrage. </aside>
+</section>
+
+<section>
+	<h3><code>COLLSCAN</code> - Collection Scan</h3>
+	<p class="small">Prüfe Dokument für Dokument ob der Preis kleiner als 1 EUR ist:</p>
+	<div data-badge="nein" data-badge-position="tr"><pre style="width: 99%;"><code class="javascript">{ "_id": 1, "bezeichnung": "...", "preis": NumberDecimal("1.89")</code></pre></div>
+	<div data-badge="nein" data-badge-position="tr"><pre style="width: 99%;"><code class="javascript">{ "_id": 2, "bezeichnung": "...", "preis": NumberDecimal("2.17")</code></pre></div>
+	<div data-badge="nein" data-badge-position="tr"><pre style="width: 99%;"><code class="javascript">{ "_id": 3, "bezeichnung": "...", "preis": NumberDecimal("2.22")</code></pre></div>
+	<div data-badge="nein" data-badge-position="tr"><pre style="width: 99%;"><code class="javascript">{ "_id": 4, "bezeichnung": "...", "preis": NumberDecimal("5.55")</code></pre></div>
+	<div data-badge="nein" data-badge-position="tr"><pre style="width: 99%;"><code class="javascript">{ "_id": 5, "bezeichnung": "...", "preis": NumberDecimal("8.95")</code></pre></div>
+	<div data-badge="ja" data-badge-position="tr"><pre style="width: 99%;"><code class="javascript">{ "_id": 6, "bezeichnung": "...", "preis": NumberDecimal("0.89")</code></pre></div>
+	<div data-badge="nein" data-badge-position="tr"><pre style="width: 99%;"><code class="javascript">{ "_id": 7, "bezeichnung": "...", "preis": NumberDecimal("1.79")</code></pre></div>
+	<div data-badge="ja" data-badge-position="tr"><pre style="width: 99%;"><code class="javascript">{ "_id": 8, "bezeichnung": "...", "preis": NumberDecimal("0.50")</code></pre></div>
+	<aside class="notes">Ein Full Collection Scan kann sehr teuer sein, da alle Dokumente einer Collection angeschaut werden müssen.​ In relationalen Datenbanken lautet der Betriff "Table Scan".​</aside>
+</section>
+
+<section>
+	<h3>Collection-Scan auf BSON</h3>
+	<pre><code class="javascript">db.personen.find({"name":"Ulrike"})</code></pre>
+	<p style="font-size:6mm; margin-left: 4cm;"><code>{"_id":1,&nbsp;&nbsp;"name":"Franka",&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"geboren":2000 }​</code></p>
+	<div style="font-size: 66%;">
+	<div class="sl-block" data-block-type="text" data-name="text-c65dc4" data-block-id="3fa6c8795c3c128c9d848ddfcdf58b63" style="height: auto; width: 65px; left: 22.5px; top: 189px;">
+    <div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 10; border-style: solid; border-width: 1px; background-color: rgb(68, 170, 171); font-size: 75%;">
+        <p style="text-align: center;">Länge<br>
+            44</p>
+    </div>
+</div>
+<div class="sl-block" data-block-type="text" style="height: auto; width: 65px; left: 89px; top: 189px;" data-block-id="9290905691e8d2052c5be77bd4d1ee91" data-name="text-fe8a3f">
+    <div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 11; border-style: solid; border-width: 1px; background-color: rgb(68, 170, 171); font-size: 75%;">
+			<p style="text-align: center;">Typ<br>
+            16</p>
+    </div>
+</div>
+<div class="sl-block" data-block-type="text" style="height: auto; width: 65px; left: 160px; top: 189px;" data-block-id="8f5bc46bc2ae3ce2f937d6f31dfef12d" data-name="text-6c3227">
+    <div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 12; border-style: solid; border-width: 1px; background-color: rgb(68, 170, 171); font-size: 75%;">
+			<p style="text-align: center;">Feld<br>
+            _id\0</p>
+    </div>
+</div>
+<div class="sl-block" data-block-type="text" style="height: auto; width: 65px; left: 226.5px; top: 189px;" data-block-id="f58f702340be57c189d73c5367ff9053" data-name="text-dd226d">
+    <div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 13; border-style: solid; border-width: 1px; background-color: rgb(68, 170, 171); font-size: 75%;">
+			<p style="text-align: center;">Wert<br>
+            1</p>
+    </div>
+</div>
+<div class="sl-block" data-block-type="text" style="height: auto; width: 65px; left: 298.5px; top: 189px;" data-block-id="7e249e1a6501f76ea1c3100df15b0693" data-name="text-7bbf24">
+    <div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 14; border-style: solid; border-width: 1px; background-color: rgb(68, 170, 171); font-size: 75%;">
+			<p style="text-align: center;">Typ<br>
+            2</p>
+    </div>
+</div>
+<div class="sl-block" data-block-type="text" style="height: auto; width: 87px; left: 365px; top: 189px;" data-block-id="353c1e0069f164750964dba747ac53f4" data-name="text-1ccc10">
+    <div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 15; border-style: solid; border-width: 1px; background-color: rgb(68, 170, 171); font-size: 75%;">
+			<p style="text-align: center;">Feld<br>
+            name\0</p>
+    </div>
+</div>
+<div class="sl-block" data-block-type="text" style="height: auto; width: 65px; left: 455px; top: 189px;" data-block-id="3e87c6e1fefb6a0b2f1c2540f2d40bb8" data-name="text-37e781">
+    <div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 16; border-style: solid; border-width: 1px; background-color: rgb(68, 170, 171); font-size: 75%;">
+			<p style="text-align: center;">Länge<br>
+            7</p>
+    </div>
+</div>
+<div class="sl-block" data-block-type="text" style="height: auto; width: 96px; left: 526.5px; top: 189px;" data-block-id="e857e2ba9642a7e2195580e53277b441" data-name="text-b1d49a">
+    <div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 17; border-style: solid; border-width: 1px; background-color: rgb(68, 170, 171); font-size: 75%;">
+			<p style="text-align: center;">Wert<br>
+            Franka\0</p>
+    </div>
+</div>
+<div class="sl-block" data-block-type="text" style="height: auto; width: 65px; left: 629px; top: 189px;" data-block-id="e4269b7295523fbabc69b0223685a15b" data-name="text-f55b72">
+    <div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 18; border-style: solid; border-width: 1px; background-color: rgb(68, 170, 171); font-size: 75%;">
+			<p style="text-align: center;">Typ<br>
+            16</p>
+    </div>
+</div>
+<div class="sl-block" data-block-type="text" style="height: auto; width: 117px; left: 702.5px; top: 189px;" data-block-id="a2483a2fe1eead7585fde987a9944d66" data-name="text-900feb">
+    <div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 19; border-style: solid; border-width: 1px; background-color: rgb(68, 170, 171); font-size: 75%;">
+			<p style="text-align: center;">Feld<br>
+            geboren\0</p>
+    </div>
+</div>
+<div class="sl-block" data-block-type="text" style="height: auto; width: 65px; left: 830.5px; top: 189px;" data-block-id="ef29667121bb0a31185a5a143ee65270" data-name="text-7ed51e">
+    <div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 20; border-style: solid; border-width: 1px; background-color: rgb(68, 170, 171); font-size: 75%;">
+			<p style="text-align: center;">Wert<br>
+            2000</p>
+    </div>
+</div>
+<div class="sl-block" data-block-type="text" style="height: auto; width: 54px; left: 898.5px; top: 189px;" data-block-id="c802bf809debf4f9e5cfef5b61dcb502" data-name="text-0741a4">
+    <div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 21; border-style: solid; border-width: 1px; background-color: rgb(68, 170, 171); font-size: 75%;">
+			<p style="text-align: center;">EOD<br>
+            \0</p>
+    </div>
+</div>
+<div class="sl-block" data-block-type="text" data-name="text-cc46a9" data-block-id="68c94b70d66c3616d80fc37b9d77d4e3" style="height: auto; width: 945px; left: 7.5px; top: 239.5px;">
+    <div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 22;">
+        <p style="text-align:left"><span style="font-size:1em">Bytes: 4&nbsp; &nbsp; 1&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;4&nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;4&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 1&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 5&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 4&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 7&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;1&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;8&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;4&nbsp; &nbsp; &nbsp; &nbsp; 1</span></p>
+    </div>
+</div>
+<div class="sl-block fragment" data-fragment-index="1" data-block-type="text" data-name="text-7ff257" data-block-id="233c01afcdade6a7f11a759660b2e450" style="height: auto; width: 163px; left: 22.5px; top: 383.5px;">
+    <div class="sl-block-style" style="z-index: 23; transform: rotate(0deg);">
+        <div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 23; font-size: 75%; background-color: rgb(238, 238, 238);">
+            <p>Soso, das erste Attribut ist also eine Zahl. Zahlen vom Typ 16 haben Länge 4 Byte​.</p>
+        </div>
+    </div>
+</div>
+<div class="sl-block fragment" data-fragment-index="2" data-block-type="text" style="height: auto; width: 163px; left: 192.5px; top: 383.5px;" data-block-id="1bf0a66a168304ce9dc1177405b14dcd" data-name="text-e1472a">
+    <div class="sl-block-style" style="z-index: 24; transform: rotate(0deg);">
+        <div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 24; font-size: 75%; background-color: rgb(238, 238, 238);">
+            <p>Das Attribut heißt _id? Interessiert mich nicht. Ich springe drüber. Ich springe 4 Byte nach rechts.​</p>
+        </div>
+    </div>
+</div>
+<div class="sl-block fragment" data-fragment-index="3" data-block-type="text" style="height: auto; width: 135px; left: 363.5px; top: 383.5px;" data-block-id="52bbf8f0f93d253c2cdb57503a4ddaa6" data-name="text-4d603a">
+    <div class="sl-block-style" style="z-index: 25; transform: rotate(0deg);">
+        <div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 25; font-size: 75%; background-color: rgb(238, 238, 238);">
+            <p>Hier springe ich hin. Das nächste Attribut ist also ein String variabler ​Länge.​</p>
+        </div>
+    </div>
+</div>
+<div class="sl-block fragment" data-fragment-index="4" data-block-type="text" style="height: auto; width: 139px; left: 507.5px; top: 383.5px;" data-block-id="86ffd316b10583c38f7a9931654a6996" data-name="text-e9df0c">
+    <div class="sl-block-style" style="z-index: 26; transform: rotate(0deg);">
+        <div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 26; font-size: 75%; background-color: rgb(238, 238, 238);">
+            <p>Juhu, es heißt "name".​</p>
+        </div>
+    </div>
+</div>
+<div class="sl-block fragment" data-fragment-index="5" data-block-type="text" style="height: auto; width: 130px; left: 655px; top: 383.5px;" data-block-id="332e9983ffb917c9423cadfc77fa8959" data-name="text-fe48d0">
+    <div class="sl-block-style" style="z-index: 27; transform: rotate(0deg);">
+        <div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 27; font-size: 75%; background-color: rgb(238, 238, 238);">
+            <p>Jetzt lese ich 7 Zeichen. Schade, nicht "Ulrike" sondern "Franka"​.</p>
+        </div>
+    </div>
+</div>
+<div class="sl-block fragment" data-fragment-index="6" data-block-type="text" style="height: auto; width: 146px; left: 800px; top: 383.5px;" data-block-id="34ccab5d4aa2192a7871a3bf3bfb9040" data-name="text-0fc34c">
+    <div class="sl-block-style" style="z-index: 28; transform: rotate(0deg);">
+        <div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 28; font-size: 75%; background-color: rgb(238, 238, 238);">
+            <p>Den Rest des Dokuments (44-30=14 Bytes) kann ich überspringen.​</p>
+        </div>
+    </div>
+</div>
+<div class="sl-block fragment" data-fragment-index="1" data-block-type="line" data-name="line-0e260e" data-block-id="557dc9a586cfb9a307c9fb422cf1601d" style="width: auto; height: auto; min-width: 0px; min-height: 0px; left: 111px; top: 293px;">
+    <div class="sl-block-content" data-line-x1="0" data-line-y1="90.5" data-line-x2="10.5" data-line-y2="0" data-line-color="#000000" data-line-start-type="none" data-line-end-type="line-arrow" style="z-index: 29;" data-line-width="5px"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" preserveAspectRatio="xMidYMid" width="10.5" height="90.5" viewBox="0 0 10.5 90.5">
+            <line stroke="rgba(0,0,0,0)" stroke-width="15" x1="0.5" y1="91" x2="10.567816243677575" y2="4.225012375921862"></line>
+            <line class="line-element" stroke="#000000" stroke-width="5" x1="0.5" y1="91" x2="10.567816243677575" y2="4.225012375921862"></line>
+            <path style="fill: rgba(0,0,0,0);" stroke="#000000" stroke-width="5" transform="translate(10.067816243677575,3.725012375921862) rotate(6.618)" d="M 11.25 11.25 L 0 0 L -11.25 11.25"></path>
+        </svg></div>
+</div>
+<div class="sl-block fragment" data-fragment-index="2" data-block-type="line" style="width: auto; height: auto; min-width: 0px; min-height: 0px; left: 192.5px; top: 284px;" data-block-id="39447de5018f1aa59575a02f07e7fca2" data-name="line-c61f9e">
+    <div class="sl-block-content" data-line-x1="81.5" data-line-y1="99.5" data-line-x2="0" data-line-y2="0" data-line-color="#000000" data-line-start-type="none" data-line-end-type="line-arrow" style="z-index: 30;" data-line-width="5px"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" preserveAspectRatio="xMidYMid" width="81.5" height="99.5" viewBox="0 0 81.5 99.5">
+            <line stroke="rgba(0,0,0,0)" stroke-width="15" x1="82" y1="100" x2="2.876229071188375" y2="3.4010403997943963"></line>
+            <line class="line-element" stroke="#000000" stroke-width="5" x1="82" y1="100" x2="2.876229071188375" y2="3.4010403997943963"></line>
+            <path style="fill: rgba(0,0,0,0);" stroke="#000000" stroke-width="5" transform="translate(2.376229071188375,2.9010403997943963) rotate(-39.321)" d="M 11.25 11.25 L 0 0 L -11.25 11.25"></path>
+        </svg></div>
+</div>
+<div class="sl-block fragment" data-fragment-index="3" data-block-type="line" style="width: auto; height: auto; min-width: 0px; min-height: 0px; left: 350px; top: 278.5px;" data-block-id="e703314ead7d287fe72f577aaa8b2e63" data-name="line-944e89">
+    <div class="sl-block-content" data-line-x1="81.5" data-line-y1="99.5" data-line-x2="0" data-line-y2="0" data-line-color="#000000" data-line-start-type="none" data-line-end-type="line-arrow" style="z-index: 31;" data-line-width="5px"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" preserveAspectRatio="xMidYMid" width="81.5" height="99.5" viewBox="0 0 81.5 99.5">
+            <line stroke="rgba(0,0,0,0)" stroke-width="15" x1="82" y1="100" x2="2.876229071188375" y2="3.4010403997943963"></line>
+            <line class="line-element" stroke="#000000" stroke-width="5" x1="82" y1="100" x2="2.876229071188375" y2="3.4010403997943963"></line>
+            <path style="fill: rgba(0,0,0,0);" stroke="#000000" stroke-width="5" transform="translate(2.376229071188375,2.9010403997943963) rotate(-39.321)" d="M 11.25 11.25 L 0 0 L -11.25 11.25"></path>
+        </svg></div>
+</div>
+<div class="sl-block fragment" data-fragment-index="4" data-block-type="line" style="width: auto; height: auto; min-width: 0px; min-height: 0px; left: 414px; top: 278.5px;" data-block-id="0ce90223f752c0bda32cb8ed20143e68" data-name="line-4822d6">
+    <div class="sl-block-content" data-line-x1="163" data-line-y1="105" data-line-x2="0" data-line-y2="0" data-line-color="#000000" data-line-start-type="none" data-line-end-type="line-arrow" style="z-index: 32;" data-line-width="5px"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" preserveAspectRatio="xMidYMid" width="163" height="105" viewBox="0 0 163 105">
+            <line stroke="rgba(0,0,0,0)" stroke-width="15" x1="163.5" y1="105.5" x2="3.6525327257801727" y2="2.530772614766369"></line>
+            <line class="line-element" stroke="#000000" stroke-width="5" x1="163.5" y1="105.5" x2="3.6525327257801727" y2="2.530772614766369"></line>
+            <path style="fill: rgba(0,0,0,0);" stroke="#000000" stroke-width="5" transform="translate(3.1525327257801727,2.030772614766369) rotate(-57.212)" d="M 11.25 11.25 L 0 0 L -11.25 11.25"></path>
+        </svg></div>
+</div>
+<div class="sl-block fragment" data-fragment-index="5" data-block-type="line" style="width: auto; height: auto; min-width: 0px; min-height: 0px; left: 526.5px; top: 270.75px;" data-block-id="35c1f4da0a5031079b5bfaf345432ca0" data-name="line-bc2772">
+    <div class="sl-block-content" data-line-x1="193.5" data-line-y1="107.25" data-line-x2="0" data-line-y2="0" data-line-color="#000000" data-line-start-type="none" data-line-end-type="line-arrow" style="z-index: 33;" data-line-width="5px"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" preserveAspectRatio="xMidYMid" width="193.5" height="107.25" viewBox="0 0 193.5 107.25">
+            <line stroke="rgba(0,0,0,0)" stroke-width="15" x1="194" y1="107.75" x2="3.7798871588785112" y2="2.3179219524016554"></line>
+            <line class="line-element" stroke="#000000" stroke-width="5" x1="194" y1="107.75" x2="3.7798871588785112" y2="2.3179219524016554"></line>
+            <path style="fill: rgba(0,0,0,0);" stroke="#000000" stroke-width="5" transform="translate(3.2798871588785112,1.8179219524016554) rotate(-61.002)" d="M 11.25 11.25 L 0 0 L -11.25 11.25"></path>
+        </svg></div>
+</div>
+<div class="sl-block fragment" data-fragment-index="6" data-block-type="line" style="width: auto; height: auto; min-width: 0px; min-height: 0px; left: 880.5px; top: 259px;" data-block-id="57e9c3a464246c3b3f5249db814bf364" data-name="line-9145ad">
+    <div class="sl-block-content" data-line-x1="0" data-line-y1="119.25" data-line-x2="72" data-line-y2="0" data-line-color="#000000" data-line-start-type="none" data-line-end-type="line-arrow" style="z-index: 34;" data-line-width="5px"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" preserveAspectRatio="xMidYMid" width="72" height="119.25" viewBox="0 0 72 119.25">
+            <line stroke="rgba(0,0,0,0)" stroke-width="15" x1="0.5" y1="119.75" x2="70.56174087862281" y2="3.710241669780972"></line>
+            <line class="line-element" stroke="#000000" stroke-width="5" x1="0.5" y1="119.75" x2="70.56174087862281" y2="3.710241669780972"></line>
+            <path style="fill: rgba(0,0,0,0);" stroke="#000000" stroke-width="5" transform="translate(70.06174087862281,3.210241669780972) rotate(31.122)" d="M 11.25 11.25 L 0 0 L -11.25 11.25"></path>
+        </svg></div>
+</div>
+</div>
+<aside class="notes">Es soll ein Collection Scan mit dem Prädikat <code>{"name":"Ulrike"}</code> durchgeführt werden. Dazu wird in jedem Dokument überprüft, ob es das Feld "name" besitzt und falls ja, ob dieses den Wert "Ulrike" hat. Mittels der Typ- und Längeninfos der Felder kann schnell zum nächsten Feld gesprungen werden, ohne den Wert zu lesen. Mit Hilfe der Dokumentgesamtlänge kann schnell zum Ende des Dokuments, also zum nächsten Dokument, gesprungen werden. ​</aside>
+</section>
 
 <!-- Move to Performance Chapter
 <section>

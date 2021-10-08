@@ -174,21 +174,105 @@ WriteResult({ "nInserted" : 1 })</code></pre>
 								</section>
 
 								<section>
-									<h2>BSON</h2>
-									<p class="small">Binary JSON</p>
-									<p class="small">Internes Speicherformat, was schnellere Suchen auf Dokumenten ermöglicht.</p>
-									<pre><code class="javascript">{ "_id": 17, "bezeichnung": "Schokoriegel" }</code></pre>
+									<h3>BSON (Binary JSON)</h3>
+									<p class="small" style="width: 108%;">Internes Speicherformat; ermöglicht schnellere Suche auf Dokumenten.</p>
+
+									<p style="font-size:6mm; margin-left: 4cm;"><code>{"_id":1, "name":"Franka", "geboren":2000 }​</code></p>
+									<div style="font-size: 66%;">
+									<div class="sl-block" data-block-type="text" data-name="text-c65dc4" data-block-id="3fa6c8795c3c128c9d848ddfcdf58b63" style="height: auto; width: 65px; left: 22.5px; top: 189px;">
+										<div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 10; border-style: solid; border-width: 1px; background-color: rgb(68, 170, 171); font-size: 75%;">
+												<p style="text-align: center;">Länge<br>
+														44</p>
+										</div>
+								</div>
+								<div class="sl-block" data-block-type="text" style="height: auto; width: 65px; left: 89px; top: 189px;" data-block-id="9290905691e8d2052c5be77bd4d1ee91" data-name="text-fe8a3f">
+										<div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 11; border-style: solid; border-width: 1px; background-color: rgb(68, 170, 171); font-size: 75%;">
+											<p style="text-align: center;">Typ<br>
+														16</p>
+										</div>
+								</div>
+								<div class="sl-block" data-block-type="text" style="height: auto; width: 65px; left: 160px; top: 189px;" data-block-id="8f5bc46bc2ae3ce2f937d6f31dfef12d" data-name="text-6c3227">
+										<div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 12; border-style: solid; border-width: 1px; background-color: rgb(68, 170, 171); font-size: 75%;">
+											<p style="text-align: center;">Feld<br>
+														_id\0</p>
+										</div>
+								</div>
+								<div class="sl-block" data-block-type="text" style="height: auto; width: 65px; left: 226.5px; top: 189px;" data-block-id="f58f702340be57c189d73c5367ff9053" data-name="text-dd226d">
+										<div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 13; border-style: solid; border-width: 1px; background-color: rgb(68, 170, 171); font-size: 75%;">
+											<p style="text-align: center;">Wert<br>
+														1</p>
+										</div>
+								</div>
+								<div class="sl-block" data-block-type="text" style="height: auto; width: 65px; left: 298.5px; top: 189px;" data-block-id="7e249e1a6501f76ea1c3100df15b0693" data-name="text-7bbf24">
+										<div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 14; border-style: solid; border-width: 1px; background-color: rgb(68, 170, 171); font-size: 75%;">
+											<p style="text-align: center;">Typ<br>
+														2</p>
+										</div>
+								</div>
+								<div class="sl-block" data-block-type="text" style="height: auto; width: 87px; left: 365px; top: 189px;" data-block-id="353c1e0069f164750964dba747ac53f4" data-name="text-1ccc10">
+										<div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 15; border-style: solid; border-width: 1px; background-color: rgb(68, 170, 171); font-size: 75%;">
+											<p style="text-align: center;">Feld<br>
+														name\0</p>
+										</div>
+								</div>
+								<div class="sl-block" data-block-type="text" style="height: auto; width: 65px; left: 455px; top: 189px;" data-block-id="3e87c6e1fefb6a0b2f1c2540f2d40bb8" data-name="text-37e781">
+										<div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 16; border-style: solid; border-width: 1px; background-color: rgb(68, 170, 171); font-size: 75%;">
+											<p style="text-align: center;">Länge<br>
+														7</p>
+										</div>
+								</div>
+								<div class="sl-block" data-block-type="text" style="height: auto; width: 96px; left: 526.5px; top: 189px;" data-block-id="e857e2ba9642a7e2195580e53277b441" data-name="text-b1d49a">
+										<div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 17; border-style: solid; border-width: 1px; background-color: rgb(68, 170, 171); font-size: 75%;">
+											<p style="text-align: center;">Wert<br>
+														Franka\0</p>
+										</div>
+								</div>
+								<div class="sl-block" data-block-type="text" style="height: auto; width: 65px; left: 629px; top: 189px;" data-block-id="e4269b7295523fbabc69b0223685a15b" data-name="text-f55b72">
+										<div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 18; border-style: solid; border-width: 1px; background-color: rgb(68, 170, 171); font-size: 75%;">
+											<p style="text-align: center;">Typ<br>
+														16</p>
+										</div>
+								</div>
+								<div class="sl-block" data-block-type="text" style="height: auto; width: 117px; left: 702.5px; top: 189px;" data-block-id="a2483a2fe1eead7585fde987a9944d66" data-name="text-900feb">
+										<div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 19; border-style: solid; border-width: 1px; background-color: rgb(68, 170, 171); font-size: 75%;">
+											<p style="text-align: center;">Feld<br>
+														geboren\0</p>
+										</div>
+								</div>
+								<div class="sl-block" data-block-type="text" style="height: auto; width: 65px; left: 830.5px; top: 189px;" data-block-id="ef29667121bb0a31185a5a143ee65270" data-name="text-7ed51e">
+										<div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 20; border-style: solid; border-width: 1px; background-color: rgb(68, 170, 171); font-size: 75%;">
+											<p style="text-align: center;">Wert<br>
+														2000</p>
+										</div>
+								</div>
+								<div class="sl-block" data-block-type="text" style="height: auto; width: 54px; left: 898.5px; top: 189px;" data-block-id="c802bf809debf4f9e5cfef5b61dcb502" data-name="text-0741a4">
+										<div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 21; border-style: solid; border-width: 1px; background-color: rgb(68, 170, 171); font-size: 75%;">
+											<p style="text-align: center;">EOD<br>
+														\0</p>
+										</div>
+								</div>
+								<div class="sl-block" data-block-type="text" data-name="text-cc46a9" data-block-id="68c94b70d66c3616d80fc37b9d77d4e3" style="height: auto; width: 945px; left: 7.5px; top: 239.5px;">
+										<div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 22;">
+												<p style="text-align:left"><span style="font-size:1em">Bytes: 4&nbsp; &nbsp; 1&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;4&nbsp;&nbsp; &nbsp; &nbsp; &nbsp; &nbsp;4&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 1&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 5&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 4&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; 7&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;1&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;8&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;4&nbsp; &nbsp; &nbsp; &nbsp; 1</span></p>
+										</div>
+								</div>
+								
+								</div>
+
+									<!--<pre><code class="javascript">{ "_id": 17, "bezeichnung": "Schokoriegel" }</code></pre>
 									<table class="small">
 										<tr><td>length</td><td>type</td><td>field</td><td>value</td><td>type</td><td>field</td><td>length</td><td>value</td><td>EOD</td></tr>
 										<tr style="font-family: monospace; font-size: 16pt;"><td>45</td><td>16</td><td>_id\0</td><td>17</td><td>2</td><td>bezeichnung\0</td><td>12</td><td>Schokoriegel\0</td><td>\0</td></tr>
 										<tr><td>4 Bytes</td><td>1</td><td>4</td><td>4</td><td>1</td><td>12</td><td>4</td><td>13</td><td>1</td></tr>
-									</table>
-									<div class="poll fragment fade-in-then-out" style="top:10px; height: 9.5cm;" data-fragment-index="1">
-										<h1>Wie viel Prozent mehr oder weniger Platz benötigt die BSON-Repräsentation im vergleich zum JSON-String?</h1>
+									</table>-->
+
+
+									<div class="poll fragment" style="bottom: -500px;" data-fragment-index="1">
+										<h1>Wie viel Prozent mehr oder weniger Platz benötigt die BSON-Repräsentation im Vergleich zum JSON-String?</h1>
 												<ul>
-														<li>27% weniger</li>
+														<li>17% weniger</li>
 														<li data-poll="correct">gleich viel</li>
-														<li>11% mehr</li>
+														<li>21% mehr</li>
 												</ul>
 										<h2>https://fraage.de</h2>
 									</div>
