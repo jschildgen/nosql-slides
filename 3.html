@@ -18,7 +18,13 @@
         <link rel="stylesheet" href="src/poll.css" />
 
 		<!-- Theme used for syntax highlighting of code -->
-		<link rel="stylesheet" href="src/rainbow.css">
+		<script>
+			if(window.location.search.match( /print-pdf/gi )) {
+				document.getElementsByTagName("head")[0].innerHTML += '<link rel="stylesheet" href="src/routeros.css">';
+			} else {
+				document.getElementsByTagName("head")[0].innerHTML += '<link rel="stylesheet" href="src/rainbow.css">';
+			}
+		</script>
 
         <!--<script defer src="lib/fontawesome.all.min.js"/>-->
         <link href="lib/fontawesome.all.min.css" rel="stylesheet">
@@ -288,6 +294,45 @@
 </div>
 </div>
 <aside class="notes">Es soll ein Collection Scan mit dem Prädikat <code>{"name":"Ulrike"}</code> durchgeführt werden. Dazu wird in jedem Dokument überprüft, ob es das Feld "name" besitzt und falls ja, ob dieses den Wert "Ulrike" hat. Mittels der Typ- und Längeninfos der Felder kann schnell zum nächsten Feld gesprungen werden, ohne den Wert zu lesen. Mit Hilfe der Dokumentgesamtlänge kann schnell zum Ende des Dokuments, also zum nächsten Dokument, gesprungen werden. ​</aside>
+</section>
+
+<section>
+    <h3>Indexe</h3>
+    <p class="small">Ein Index auf einem Feld beschleunigt Suchen und verhindert Collection-Scans.</p>
+    <h4>Index auf dem <code>_id</code>-Feld (Standard)</h4>
+    <pre><code class="javasript">db.produkte.getIndexes()</code></pre>
+<p class="small"><code class="javascript">[ { "v" : 2, "key" : { "_id" : 1 }, "name" : "_id_" } ]</code></p>
+
+<h4>Index-Scan</h4>
+<pre><code class="javasript">db.produkte.explain("executionStats").find({"_id":12345})</code></pre>
+<pre><code class="javasript">{
+// ...
+ "totalDocsExamined" : 1,
+// ...
+}</code></pre>
+    <aside class="notes">Der Index auf dem <code>_id</code>-Feld wird automatisch erstellt und kann nicht gedroppt werden. Dieser Index dient nicht nur der schnellen Suche auf dem <code>_id</code>-Feld, es ist auch ein Unique-Index, der dafür sorgt, dass <code>_id</code>-Werte eindeutig sind. Der Anfrageplan mit Ausführungsstatistiken auf dieser Folie zeigt, dass nur ein Dokument angeschaut werden musste, um das gesuchte Dokument mit der <code>_id</code> 12345 zu finden.</aside>
+</section>
+
+<section>
+    <h3>Index anlegen</h3>
+    <pre style="width: 99%;"><code class="javascript">db.produkte.createIndex({"preis":1})</code></pre>
+
+    <pre style="width: 99%;"><code class="javascript">// Kann genutzt werden z. B. bei:
+db.produkte.find({"preis": { "$lt": NumberDecimal("1") }})
+db.produkte.find().sort({"preis":-1})</code></pre>
+
+    <h4>Mehrdimensionale Indexe</h4>
+    <pre style="width: 99%;"><code class="javascript">db.produkte.createIndex({"hersteller":1, "preis":1})</code></pre>
+
+    <pre style="width: 99%;"><code class="javascript">// Kann genutzt werden z. B. bei:
+db.produkte.find({"hersteller": "Monsterfood"});
+db.produkte.find().sort({"hersteller":1});
+db.produkte.find({"hersteller": "Monsterfood",
+                  "preis": { "$lt": NumberDecimal("1") }});
+db.produkte.find({"hersteller": "Monsterfood"}).sort({"preis":-1});</code></pre>
+
+
+    <aside class="notes">Die <code>collection.createIndex</code>-Methode nimmt einen Parameter entgegen, wie man ihn von <code>sort()</code> kennt: Feldnamen und die Richtung (1: aufsteigend, -1: absteigend). Die hier gezeigten Indexe können bei Filter- und Sortieranfragen auf den angegebenen Feldern genutzt werden. Im Anfrageplan zu diesen Anfragen findet man den Schritt <code>IXSCAN</code>.</aside>
 </section>
 
 <!-- Move to Performance Chapter
