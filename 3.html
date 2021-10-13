@@ -321,6 +321,7 @@
 db.produkte.find({"preis": { "$lt": NumberDecimal("1") }})
 db.produkte.find().sort({"preis":-1})</code></pre>
 
+<div class="fragment">
     <h4>Mehrdimensionale Indexe</h4>
     <pre style="width: 99%;"><code class="javascript">db.produkte.createIndex({"hersteller":1, "preis":1})</code></pre>
 
@@ -330,10 +331,194 @@ db.produkte.find().sort({"hersteller":1});
 db.produkte.find({"hersteller": "Monsterfood",
                   "preis": { "$lt": NumberDecimal("1") }});
 db.produkte.find({"hersteller": "Monsterfood"}).sort({"preis":-1});</code></pre>
-
+</div>
 
     <aside class="notes">Die <code>collection.createIndex</code>-Methode nimmt einen Parameter entgegen, wie man ihn von <code>sort()</code> kennt: Feldnamen und die Richtung (1: aufsteigend, -1: absteigend). Die hier gezeigten Indexe können bei Filter- und Sortieranfragen auf den angegebenen Feldern genutzt werden. Im Anfrageplan zu diesen Anfragen findet man den Schritt <code>IXSCAN</code>.</aside>
 </section>
+
+<section>
+    <h3>Index-Nutzung bei der Präfix-Suche</h3>
+    <pre><code class="javascript">// Produkte, deren Hersteller mit M beginnen:
+db.produkte.find({"hersteller": {$regex: /^M/}})</code></pre>
+
+    <pre class="fragment"><code class="javascript" style="max-height: 40cm;">"winningPlan" : {
+        "stage" : "FETCH",
+        "inputStage" : {
+                "stage" : "IXSCAN",
+                "indexName" : "hersteller_1_preis_1",
+                // ...
+                "indexBounds" : {
+                        "hersteller" : [
+                                "[\"M\", \"N\")",
+                                "[/^M/, /^M/]"
+                        ],
+                        "preis" : [
+                                "[MinKey, MaxKey]"
+                        ]
+                }
+        }
+}, //...
+</code></pre>
+<aside class="notes">Die Präfix Suche <code>/^M/</code> wird umgewandelt in <code>&ge;M</code> und <code>&lt;N</code>.</aside>
+</section>
+
+<section>
+    <h3><code>text</code>-Indexe</h3>
+    <pre style="width: 100%;"><code class="javascript">db.produkte.createIndex({ beschreibung: "text" },
+                        { default_language: "german" })</code></pre>
+    <div class="fragment">
+    <p class="small">Es darf pro Collection höchstens einen Text-Index geben,<br>ein zusammengesetzter über mehrere Felder ist aber erlaubt:</p>
+    <pre style="width: 100%;"><code class="javascript">db.produkte.createIndex({ bezeichnung: "text", beschreibung: "text" })</code></pre>
+    </div>
+    <div class="fragment">
+    <h4>Wildcard-Text-Index (über alle String-Felder):</h4>
+    <pre style="width: 100%;"><code class="javascript">db.collection.createIndex( { "$**": "text" } )</code></pre>
+    </div>
+    <aside class="notes">Über die Option <code>default_language</code> wird die Sprache angegeben, die für Stop-Word-Elimination und Stemming (siehe nächste Folie) verwendet wird. Wird eine weitere Option <code>"language_override": "sprache"</code> angegeben, wird die Sprache aus dem Feld <code>sprache</code> entnommen, sofern dieses im entsprechenden Dokument vorhanden ist.</aside>
+</section>
+
+<section>
+    <h3><code>text</code>-Indexe</h3>
+    <ul class="small">
+        <li><em>Tokenization</em>: Strings werden in Wörter zerlegt (Case-insensitive)</li>
+        <li>Sprach-spezifische <em>Stop-Word-Elimination</em></li>
+        <li>Sprach-spezifisches Suffix-<em>Stemming</em> (Reduktion auf Wort-Stamm)</li>
+    </ul>
+
+    <p class="small">Beispiel: <code>{ "beschreibung": "Ein sehr gutes Produkt" }</code></p>
+    <div class="columns">
+        <div>
+            <p class="small"><b>Tokenization</b></p>
+            <p class="small"><code>"ein", "sehr",<br>"gutes", "produkt"</code></p>
+        </div>
+        <div>
+            <p class="small"><b>Stop-Word-Elimination</b></p>
+            <p class="small"><code>"gutes",<br>"produkt"</code></p>
+        </div>
+        <div>
+            <p class="small"><b>Stemming</b></p>
+            <p class="small"><code>"gut",<br>"produkt"</code></p>
+        </div>
+    </div>
+
+    <aside class="notes">Wird ein Dokument mit dem hier gezeigten Text eingefügt und existiert auf dem entsprechenden Feld ein Text-Index, landen nach Tokenization, Stop-Word-Elimination und Stemming die Terms "gut" und "produkt" im Index.</aside>
+</section>
+
+<section>
+    <h3><code>$text</code>-Suche</h3>
+    <p class="small"><code>$text</code> durchsucht alle Felder, auf denen ein Text-Index definiert ist.</p>
+
+    <pre style="width: 100%;"><code class="javascript">db.produkte.find( { $text: { $search: "die guten Sachen" } } )</code></pre>
+
+    <pre style="width: 100%;" class="fragment"><code class="javascript" style="max-height: 99cm;">"winningPlan" : {
+        "stage" : "TEXT",
+        "indexPrefix" : {
+        },
+        "indexName" : "beschreibung_text",
+        "parsedTextQuery" : {
+                "terms" : [
+                        "gut", 
+                        "sach"
+                ],
+                "negatedTerms" : [ ],
+                "phrases" : [ ],
+                "negatedPhrases" : [ ]
+        },
+        "textIndexVersion" : 3,
+        // ...
+}</code></pre>
+<aside class="notes">Auch bei den Query-Terms erfolgt Tokenization, Stop-Word-Elimination und Stemming. Die einzelnen Query-Terms werden ver-oder-t, d. h. es genügt, wenn ein Query-Term im Text vorkommt. Die hier gezeigte Anfrage würde also das Produkt mit der Beschreibung "ein sehr gutes Produkt" finden.</aside>
+</section>
+
+
+<section>
+    <h3>Text-Score</h3>
+    <pre style="width: 100%;"><code class="javascript">db.produkte.find( { $text: { $search: "die guten Produkte" } },
+                  { score: { $meta: "textScore" } } )</code></pre>
+
+    <p style="font-size:60%"><code class="javascript">{ "_id" : 1532, ..., "beschreibung" : "Eher schlechtes Produkt", "score" : 0.6666666666666666 }<br>
+{ "_id" : 82045, ..., "beschreibung" : "Ein sehr gutes Produkt", "score" : 1.5 }</code></p>
+
+<div class="fragment">
+<h4>Sortieren nach dem Text-Score (absteigend)</h4>
+<pre style="width: 100%;"><code class="javascript">db.produkte.find( { $text: { $search: "die guten Produkte" } } )
+           .sort( { score: { $meta: "textScore" } } )</code></pre>
+</div>
+
+<aside class="notes">Im oberen Beispiel wurde im Projektions-Parameter ein neues Feld <code>score</code> eingeführt, in welchem der Text-Score stehen wird. In der unteren Anfrage werden die Suchergebnisse nach dem Score absteigend sortiert.</aside>
+</section>
+
+<section>
+    <h3>Indexe auf Subattributen und Arrays</h3>
+    <pre><code class="javascript">db.kunden.createIndex({"geboren.jahr":1})</code></pre>
+
+    <div class="fragment">
+    <h4>Multi-Key-Indexe</h4>
+    <pre><code class="javascript">db.produkte.createIndex({"kategorien":1})</code></pre>
+    <p class="small">Sobald es Array-Werte gibt, legt MongoDB einen Multi-Key-Index an<br>
+        &Rightarrow; Ein Eintrag im Index für jedes Element im Array
+        </p>
+    </div>
+    <aside class="notes">Der oberere Index hilft bei der Anfrage, wer 1980 geboren ist: <code>db.kunden.find({"geboren.jahr":1980})</code>, die untere beim Finden von Produkten der Kategorie Lebensmittel: <code>db.produkte.find({kategorien:"Lebensmittel"})</code></aside>
+</section>
+
+<section>
+    <h3>Sparse und partielle Indexe</h3>
+    <h4>Sparse Index</h4>
+    <p class="small" style="margin-top: -4mm; margin-bottom: -4mm;">... indiziert nur Dokumente, bei denen es das Feld auch wirklich gibt:</p>
+    <pre><code class="javascript">db.produkte.createIndex({verlag:1}, {sparse:true})</code></pre>
+
+    <div class="fragment" style="margin-top: 14mm;">
+    <h4>Partieller Index</h4>
+    <p class="small" style="margin-top: -4mm; margin-bottom: -4mm;">... indiziert nur Dokumente, die ein bestimmtes Kriterium erfüllen:</p>
+    <pre><code class="javascript">db.produkte.createIndex({gewicht:1}, 
+          {partialFilterExpression:{kategorie:"Lebensmittel"}})</code></pre>
+    </div>
+
+    <aside class="notes">Sparse-Indexe eignen sich für Felder, die nur in wenigen Dokumenten vorhanden ist. Einfügungen, Löschungen und Änderungen an Dokumenten, in denen es das Feld nicht gibt, haben dann keine Auswirkungen auf den Index.<br>
+Ähnliches gilt bei partiellen Indexen. In dem gegebenen Beispiel landen nur Dokumente im Index, die in der Kategorie Lebensmittel sind. Das spart Platz und Index-Wartungskosten. Der partielle Index hilft aber nur bei solchen Queries, in denen auch die partialFilterExpression vorkommt, in unserem Beispiel also etwa bei <code>db.produkte.find({kategorie:"Lebensmittel", "gewicht": {$gt:1000}})</code>   
+    </section>
+
+<section>
+    <h3>Unique- und Hashed-Indexe</h3>
+    <h4>Unique-Index</h4>
+    <p class="small" style="margin-top: -4mm; margin-bottom: -4mm;">... passt auf, dass jeder Wert in der Collection nur einmal vorkommt:</p>
+    <pre><code class="javascript">db.kunden.createIndex({email:1}, {unique:true})</code></pre>
+
+    <div class="fragment" style="margin-top: 14mm;">
+    <h4>Hashed-Index</h4>
+    <p class="small" style="margin-top: -4mm; margin-bottom: -4mm;">... trägt nicht die Werte sondern Ergebnisse einer Hash-Funktion in den Index ein:</p>
+    <pre><code class="javascript">db.kunden.createIndex({email:"hashed"})</code></pre>
+
+    <p class="small">$h('peter@example.com') = 1510671575292898645$</p>
+    </div>
+
+    <aside class="notes">Bei einem Unique-Index auf mehreren Feldern muss die Kombination der Werte in den angegebenen Feldern eindeutig sein: <code>db.kunden.createIndex({vorname:1, nachname:1}, {unique:true})</code>. Sind beim Erstellen eines Unique-Indexes schon mehrfach vorkommende Werte vorhanden, wird das Index-Erstellen fehlschlagen. Auf dem Feld <code>_id</code> existiert immer ein Unique-Index.<br>
+    Der Nutzen eines Hashed-Index wird erst im Sharding-Kapitel erklärt. Hash-Indexe können nämlich für eine gleichmäßigere Verteilung der Dokumente auf mehrere Rechnerknoten im Cluster sorgen.<br>
+    Sucht man nach einer E-Mail-Adresse x, wird h(x) berechnet und dies nun im Index nachgeschlagen. 
+    </aside>
+</section>
+
+<!--Todo: TTL, Geo-Index-->
+
+<section>
+    <h3>Indexe droppen oder verstecken</h3>
+    <pre style="width: 100%;"><code class="javascript">db.produkte.dropIndex("gewicht_1");  // über den Index-Namen
+db.produkte.dropIndex({"verlag":1}); // oder wie er spezifiziert wurde</code></pre>
+
+<div class="fragment">
+    <h4>Hidden Index</h4>
+    <p class="small" style="margin-top: -4mm; margin-bottom: -4mm;">... ist zwar da, wird aber nicht bei Query-Ausführungen genutzt:</p>
+    <pre style="width: 100%;"><code class="javascript">db.produkte.createIndex({"hersteller":1}, {"hidden":true})</code></pre>
+
+    <pre style="width: 100%;"><code class="javascript">db.produkte.hideIndex({"hersteller":1})</code></pre>
+    <pre style="width: 100%;"><code class="javascript">db.produkte.unhideIndex({"hersteller":1})</code></pre>
+</div>
+<aside class="notes">Indexe beschleunigen Anfragen, verlangsamen aber Einfügungen, Löschungen und Änderungen. Daher sollte das Anlegen von Indexen gut durchdacht und evaluiert werden. Anders als bei <code>dropIndex</code> wird beim Verstecken eines Indexes der Index nicht entfernt, sondern lediglich für seine Nutzung deaktiviert. Er wird weiterhin gepflegt und belegt Platz. Das ist für Performance-Experimente nützlich, um Indexe nicht jedes mal komplett neu erstellen zu müssen.</aside>
+</section>
+
+
+
 
 <!-- Move to Performance Chapter
 <section>
