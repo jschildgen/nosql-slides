@@ -499,7 +499,97 @@ db.produkte.find({"hersteller": {$regex: /^M/}})</code></pre>
     </aside>
 </section>
 
-<!--Todo: TTL, Geo-Index-->
+<section>
+    <h3>TTL-Indexe - Time To Live</h3>
+
+    <p class="small">Dokument wird automatisch gelöscht, wenn<br><code>lastModifiedDate < jetzt - expireAfterSeconds</code></p>
+
+    <pre><code class="javascript">db.warenkorb.createIndex( { "lastModifiedDate": 1 }, 
+                          { expireAfterSeconds: 86400 } )</code></pre>
+
+    <aside class="notes">TTL-Indexe können nur auf Felder vom BSON-Typ Date und auf Arrays von Dates definiert werden. Sie sorgen dafür, dass Dokumente nach einer gewissen Zeit "ablaufen" und dann automatisch aus der Collection gelöscht werden. Ist das Feld ein Array mit Dates, wird aus diesem der kleinste (früheste) Wert genommen.<br>
+    TTL-Indexe sind sinnvoll, wenn man nur aktuelle Daten benötigt und keine historischen Daten behalten will, z. B. Event- oder Sensor-Daten, Logs, Session-Daten, etc.</aside>
+</section>
+
+<section>
+    <h3>Geodaten und Geo-Indexe</h3>
+    <p class="small"><code class="javascript">//&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;longitude, latitude<br>
+{"_id": 6, "name": "Ute", "coord": [12.095089, 49.003674]}</code></p>
+
+    <pre><code class="javascript">db.kunden.createIndex( { coord: "2dsphere" } )</code></pre>
+
+<div class="fragment">
+    <h4>GeoJSON</h4>
+    <p class="small">GeoJSON-Objekt-Typen: <code>Point</code>, <code>LineString</code>, <code>Polygon</code>, ...</p>
+    <span style="font-size: 2cm; position: absolute; top: 6cm; right: 4cm;" class="red">.</span>
+    
+    <div class="sl-block" data-block-type="line" data-name="line-f7a33c" data-block-id="0358d6fa866ae4e4793c4b634184ef0c" style="width: auto; height: auto; min-width: 0px; min-height: 0px; left: 799px; top: 360px;">
+        <div class="sl-block-content" data-line-x1="0" data-line-y1="0" data-line-x2="80" data-line-y2="0" data-line-color="#000000" data-line-start-type="none" data-line-end-type="none" style="z-index: 10;" data-line-width="4px"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" preserveAspectRatio="xMidYMid" width="80" height="1" viewBox="0 0 80 1">
+                        <line stroke="rgba(0,0,0,0)" stroke-width="15" x1="0" y1="0" x2="80" y2="0"></line>
+                        <line class="line-element" stroke="#ff6363" stroke-width="4" x1="0" y1="0" x2="80" y2="0"></line>
+                </svg></div>
+</div>
+<div class="sl-block" data-block-type="line" style="width: auto; height: auto; min-width: 0px; min-height: 0px; left: 800px; top: 360px;" data-block-id="cb69b9127a25f3059c892f8db107bc40" data-name="line-40d799">
+        <div class="sl-block-content" data-line-x1="20" data-line-y1="70" data-line-x2="80" data-line-y2="0" data-line-color="#000000" data-line-start-type="none" data-line-end-type="none" style="z-index: 11;" data-line-width="4px"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" preserveAspectRatio="xMidYMid" width="80" height="70" viewBox="0 0 80 70">
+                        <line stroke="rgba(0,0,0,0)" stroke-width="15" x1="20" y1="70" x2="80" y2="0"></line>
+                        <line class="line-element" stroke="#ff6363" stroke-width="4" x1="20" y1="70" x2="80" y2="0"></line>
+                </svg></div>
+</div>
+<div class="sl-block" data-block-type="line" style="width: auto; height: auto; min-width: 0px; min-height: 0px; left: 799px; top: 360px;" data-block-id="ce9846899e64939cbe9394efef95c4cd" data-name="line-5bcb67">
+        <div class="sl-block-content" data-line-x1="0" data-line-y1="30" data-line-x2="0" data-line-y2="0" data-line-color="#000000" data-line-start-type="none" data-line-end-type="none" style="z-index: 12;" data-line-width="4px"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" preserveAspectRatio="xMidYMid" width="1" height="70" viewBox="0 0 1 70">
+                        <line stroke="rgba(0,0,0,0)" stroke-width="15" x1="0" y1="30" x2="0" y2="0"></line>
+                        <line class="line-element" stroke="#ff6363" stroke-width="4" x1="0" y1="30" x2="0" y2="0"></line>
+                </svg></div>
+            </div>
+
+<!-- Polygon -->
+    <div class="sl-block" data-block-type="shape" data-name="shape-10bafd" data-block-id="93531f61e7410a9f5650a6138d0a7bbb" style="width: 160px; height: 140px; left: 740px; top: 450px;">
+    <div class="sl-block-content" data-shape-type="diamond" data-shape-fill-color="#ff6363" data-shape-stretch="true" style="z-index: 10;"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 160 140">
+                    <polygon points="160,70 80,140 0,70 80,0" class="shape-element" fill="#ff6363"></polygon>
+            </svg></div></div>
+
+    <p class="small"><code class="javascript">{<br>
+&nbsp;_id: 5, name: "Peter", coord: {<br>
+&nbsp;&nbsp;type: "Point",<br>
+&nbsp;&nbsp;coordinates: [12.11595, 49.026222]<br>
+&nbsp;}<br>
+}</code></p>
+</div>
+
+    <aside class="notes">Der simpelste Weg, Geo-Koordinaten in MongoDB zu speichern ist ein Array mit zwei Elementen: dem Längengrad (zwischen -180 und 180) und Breitengrad (zwischen -90 und 90). Alternativ kann GeoJSON verwendet werden. Damit sind auch andere Objekte als nur Punkte möglich.</aside>
+</section>
+
+<section>
+    <!--
+create table kunden(coords GEOMETRY(POINT, 4326));
+
+insert into kunden values (ST_GEOMFROMTEXT('POINT(12.095089 49.003674)', 4326));
+insert into kunden values (ST_GEOMFROMTEXT('POINT(12.11595 49.026222)', 4326));
+
+select coords from kunden
+union select ST_GEOMFROMTEXT('POLYGON((6 55, 15 55, 15 47, 6 47, 6 55))', 4326);
+    -->
+    <h3>Anfragen auf Geodaten</h3>
+
+    <h4><code>$near</code>: Umkreissuche</h4>
+    <pre><code class="javascript">db.kunden.find( { "coord": { $near : {
+  $geometry: { type: "Point", coordinates: [12.0904, 48.9878]},
+  $maxDistance: 2000  /* 2km */
+} } } )</code></pre>
+
+<div class="fragment">
+
+<h4><code>$geoWithin</code></h4>
+<pre style="width: 18cm; left: -2.5cm;"><code class="javascript">db.kunden.find( { "coord": { $geoWithin : {
+ $geometry: { type: "Polygon", coordinates: 
+   [[ [6, 55], [15, 55], [15, 47], 
+      [6, 47], [6, 55] ]]},
+} } } )</code></pre>
+<img src="img/3/germany.png" style="position: absolute; top: 8cm; right: 1mm; width: 5.5cm;" class="noborder">
+</div>
+<aside class="notes">Die Suchoperatoren auf Geodaten nehmen ein GeoJSON-Objekt entgegen. Ein Punkt ist ein Array mit Längengrad, Breitengrad. Ein LineString ein Array mit solchen Punkten. Und ein Polygon ist ein Array mit einen geschlossenen Linestring, und optional weitere geschlossene Linestrings, die die Löcher im Polygon darstellen. Hier suchen wir alle Kunden im Umkreis von 2km vom Uniklinikum Regensburg sowie alle Kunden innerhalb der Bounding-Box um Deutschland. Für diese Anfragen muss ein Geoindex existieren.</aside>
+</section>
+
 
 <section>
     <h3>Indexe droppen oder verstecken</h3>
