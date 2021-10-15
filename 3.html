@@ -297,6 +297,12 @@
 </section>
 
 <section>
+    <h3>Explain-Pläne in MongoDB Compass</h3>
+        <img src="img/3/compass_explain.png" alt="MongoDB Compass" class="noborder stretch" style="margin-top:-5mm">
+        <aside class="notes">MongoDB Compass kann Ausführungspläne und -statistiken visuell als Baum darstellen. Bei der hier gezeigten Query zeigt Compass an, dass kein Index bei der Anfrage genutzt wurde. Dies kann ein Hinweis darauf sein, dass einen Index zu erstellen möglicherweise sinnvoll sein könnte.</aside>
+</section>
+
+<section>
     <h3>Indexe</h3>
     <p class="small">Ein Index auf einem Feld beschleunigt Suchen und verhindert Collection-Scans.</p>
     <h4>Index auf dem <code>_id</code>-Feld (Standard)</h4>
@@ -607,7 +613,144 @@ db.produkte.dropIndex({"verlag":1}); // oder wie er spezifiziert wurde</code></p
 <aside class="notes">Indexe beschleunigen Anfragen, verlangsamen aber Einfügungen, Löschungen und Änderungen. Daher sollte das Anlegen von Indexen gut durchdacht und evaluiert werden. Anders als bei <code>dropIndex</code> wird beim Verstecken eines Indexes der Index nicht entfernt, sondern lediglich für seine Nutzung deaktiviert. Er wird weiterhin gepflegt und belegt Platz. Das ist für Performance-Experimente nützlich, um Indexe nicht jedes mal komplett neu erstellen zu müssen.</aside>
 </section>
 
+<section>
+    <h3>Indexe in MongoDB Compass</h3>
+        <img src="img/3/compass_index.png" alt="MongoDB Compass" class="noborder stretch" style="margin-top:-5mm">
+        <aside class="notes">Ähnlich zu <code>collection.getIndexes()</code> listet auch MongoDB Compass alle auf einer Collection befindlichen Indexe auf. Zusätzlich werden zu jedem Index Statistiken angezeigt wie deren Größe und die Anzahl der Verwendungen und das Datum der letzten Nutzung. Indexe, die nur selten genutzt werden, sollen man evtl. besser droppen, da jeder Index die Performance von Schreiboperationen negativ beeinflusst.</aside>
+</section>
 
+<section>
+    <h3>Monitoring</h3>
+    <h4><code>mongostat</code></h4>
+    <p class="small">Überblick über den Status der MongoDB-Instanz</p>
+    <pre><code class="plaintext">insert query update delete getmore command dirty used flushes
+    *0    *0     *1     *0       0     5|0  0.4% 0.5%       0
+
+vsize  res qrw arw net_in net_out conn                time
+1.48G 148M 0|0 1|0   157b   84.2k   17 Oct 15 06:47:08.811</code></pre>
+
+<p class="small">Im Moment ...</p>
+<ul class="small">
+    <li>... läuft eine Update-Query</li>
+    <li>... konsumiert MongoDB 148 MB RAM</li>
+    <li>... wartet kein Client aufs Lesen (<code>qr</code>) oder Schreiben (<code>qw</code>)</li>
+    <li>... ist ein Client aktiv beim Lesen (<code>ar</code>), keiner beim Schreiben (<code>aw</code>)</li>
+    <li>... sind 17 Clients verbunden</li>
+</ul>
+
+</section>
+
+<section>
+    <h3>Monitoring</h3>
+    <h4><code>mongotop [n]</code></h4>
+    <p class="small">Wie lange hat MongoDB in den letzten n Sekunden mit Lesen/Schreiben verbracht?</p>
+    <p class="small">Standardmäßig n = 1 (jede Sekunde)</p>
+    <pre><code>                    ns    total    read    write
+        webshop.produkte    900ms     0ms    900ms
+      admin.system.roles      0ms     0ms      0ms
+    admin.system.version      0ms     0ms      0ms
+      config.collections      0ms     0ms      0ms
+  config.system.sessions      0ms     0ms      0ms
+     config.transactions      0ms     0ms      0ms
+    local.system.replset      0ms     0ms      0ms</code></pre>
+
+    <aside class="notes">Das Konsolenprogramm <code>mongotop</code> (Teil der MongoDB Database Tools) zeigt jede Sekunde an, wie viel aktuell auf den einzelnen Collections los ist. Im gezeigten Beispiel wurde in der vergangenen Sekunde 900ms lang, also fast die ganze Zeit, in die <code>produkte</code>-Collection geschrieben.</aside>
+</section>
+
+<section>
+    <h3>Monitoring</h3>
+    <div class="columns">
+        <div>
+            <h4><code>db.currentOp()</code></h4>
+            <p class="small" style="margin-top: -4mm; margin-bottom: 0mm;">Zeigt aktuell laufende Operationen an.</p>
+        </div>
+        <div class="fragment">
+            <h4><code>db.killOp(32324)</code></h4>
+            <p class="small" style="margin-top: -4mm; margin-bottom: 0mm;">Killt eine laufende Operation.</p>
+        </div>
+    </div>
+    
+    <pre><code style="max-height: 40cm;" class="json">{
+ "inprog" : [
+   {
+        "type" : "op",
+        "host" : "jotebook:27017",
+        // ...
+        "opid" : 32324,
+        "op" : "update",
+        "ns" : "webshop.produkte",
+        "command" : {
+                "q" : {
+
+                },
+                "u" : {
+                        "$inc" : {
+                                "preis" : 0.1
+//...</code></pre>
+<aside class="notes">Ein Client führt gerade eine Update-Query aus, die den Preis jedes Produkts um 10ct erhöht.</aside>
+</section>
+
+<section>
+    <h3>Profiling</h3>
+    <p class="small">Sammelt Infos über ausgeführte Queries in der Collection <code>system.profile</code></p>
+
+    <h4 style="margin-top: -2mm; margin-bottom: 2mm;">Profiling-Levels</h4>
+    <table class="small">
+        <tr><th>0</th><td>Profiling ist ausgeschaltet (Standard)</td></tr>
+        <tr><th>1</th><td>Der Profiler sammelt Daten über Operationen,<br>die länger als <code>slowms</code> Millisekunden dauern</td></tr>
+        <tr><th>2</th><td>Der Profiler sammelt Daten über alle Operationen</td></tr>
+    </table>
+
+    <pre><code class="bash">$ mongod --profile 1 --slowms 30</code></pre>
+    <pre><code>> db.setProfilingLevel(2)
+> db.setProfilingLevel(1, { slowms: 30 })
+> db.getProfilingStatus()
+{ "was" : 1, "slowms" : 30, "sampleRate" : 1 }
+</code></pre>
+<aside class="notes">Profiling kann beim Start von <code>mongod</code> eingeschaltet werden oder nachträglich über Mongo-Shell-Kommandos. Man sieht im Profile, welche Anfragen die Anwendungen an die Datenbank schicken. Außerdem kann man damit herausfinden, welche Anfragen seit dem Aktivieren von Profiling besonders lange liefen. Das kann Hinweise darüber geben, welche Indexe man anlegen könnte.</aside>
+</section>
+
+<section>
+    <h3>Profiling</h3>
+    <pre><code class="javascript">db.system.profile.find().pretty()</code></pre>
+    <pre><code class="json" style="max-height: 99cm;">{​
+    "op" : "query",​
+    "ns" : "webshop.produkte",​
+    "command" : {
+        "find" : "produkte",
+        "filter" : {
+            "preis" : {
+                    "$lt" : 1
+            }
+        }
+    },
+    // ...
+    "docsExamined" : 100000,​
+    // ...
+    "nreturned" : 69,​
+    "responseLength" : 9782,​
+    "millis" : 98,​
+    "execStats" : { ... },​
+    "ts" : ISODate("2021-10-15T05:29:14.378Z")​
+}​</code></pre>
+<aside class="notes">Im Profile ist zu sehen, dass eine Anfrage lief, die Produkte sucht, die weniger als 1 EUR kosten. Sie dauerte 98ms. Ein Index auf dem <code>preis</code>-Feld könnte solche Queries in Zukunft beschleunigen.</aside>
+</section>
+
+<section>
+    <h3>Capped Collections</h3>
+    <div style="position: absolute; top: 70px; right:50px; font-size:130px"><i class="fas fa-recycle green"></i></div>
+    <ul class="small">
+        <li>Collection mit angegebener Maximalgröße</li>
+        <li>Ermöglichen schnelle Einfügungen</li>
+        <li>Voll? Ältestes Dokument wird gelöscht.</li>
+    </ul>
+    <pre><code class="javascript">db.createCollection("Wetterdaten", 
+                    { capped:true, size:1024*1024} })</code></pre>
+
+    <p class="small"><code>db.system.profile</code> ist eine Capped Collection.</p>
+
+    <aside class="notes">Eine Capped Collection (capped=gedeckelt) ist eine Collection, die eine gegebene Maximalgröße nicht überschreitet (hier: 1 MB). Würde bei einer Einfügeoperation die Collection überlaufen, wird das älteste Dokument gelöscht. </aside>
+</section>
 
 
 <!-- Move to Performance Chapter
