@@ -40,7 +40,7 @@
                     <a href="mailto:johannes.schildgen@oth-regensburg.de">johannes.schildgen@oth-regensburg.de</a></h4>
                     <h2>NoSQL-Datenbanken</h2>
                     <h4 style="text-align:center">&nbsp;</h4>
-                    <h3>Kapitel 3: Performance<br><small>Anfragepläne, Indexe, Profiling, Transaktionen</small></h3>
+                    <h3>Kapitel 3: Performance<br><small>Anfragepläne, Indexe, Profiling</small></h3>
                     <h4 style="text-align:center">&nbsp;<br>&nbsp;</h4>
                     <img src="img/ccby.png" height="60px" style="position: absolute; left:0px; border:0; bottom:-120px;">
                     <img src="img/oth.png" height="60px" style="position: absolute; right:0px; border:0; bottom:-120px; box-shadow:none">
@@ -70,6 +70,7 @@
 
 								<section>
 									<h3><code>explain</code></h3>
+                                    <div style="position: absolute; top: 1px; right:50px; font-size:80px"><i class="fas fa-scroll green"></i></div>
 									<pre style="width: 99%;"><code class="javascript">db.produkte.explain().find({"preis": { "$lt": NumberDecimal("1") }})</code></pre>
 									<pre><code class="javascript" style="max-height: 45cm;">{
 "queryPlanner" : {
@@ -304,6 +305,7 @@
 
 <section>
     <h3>Indexe</h3>
+    <div style="position: absolute; top: 1px; right:50px; font-size:80px"><i class="fas fa-tree green"></i></div>
     <p class="small">Ein Index auf einem Feld beschleunigt Suchen und verhindert Collection-Scans.</p>
     <h4>Index auf dem <code>_id</code>-Feld (Standard)</h4>
     <pre><code class="javasript">db.produkte.getIndexes()</code></pre>
@@ -370,6 +372,7 @@ db.produkte.find({"hersteller": {$regex: /^M/}})</code></pre>
 
 <section>
     <h3><code>text</code>-Indexe</h3>
+    <div style="position: absolute; top: 1px; right:50px; font-size:80px"><i class="fas fa-spell-check green"></i></div>
     <pre style="width: 100%;"><code class="javascript">db.produkte.createIndex({ beschreibung: "text" },
                         { default_language: "german" })</code></pre>
     <div class="fragment">
@@ -385,6 +388,7 @@ db.produkte.find({"hersteller": {$regex: /^M/}})</code></pre>
 
 <section>
     <h3><code>text</code>-Indexe</h3>
+    <div style="position: absolute; top: 1px; right:50px; font-size:80px"><i class="fas fa-spell-check green"></i></div>
     <ul class="small">
         <li><em>Tokenization</em>: Strings werden in Wörter zerlegt (Case-insensitive)</li>
         <li>Sprach-spezifische <em>Stop-Word-Elimination</em></li>
@@ -412,6 +416,7 @@ db.produkte.find({"hersteller": {$regex: /^M/}})</code></pre>
 
 <section>
     <h3><code>$text</code>-Suche</h3>
+    <div style="position: absolute; top: 1px; right:50px; font-size:80px"><i class="fas fa-spell-check green"></i></div>
     <p class="small"><code>$text</code> durchsucht alle Felder, auf denen ein Text-Index definiert ist.</p>
 
     <pre style="width: 100%;"><code class="javascript">db.produkte.find( { $text: { $search: "die guten Sachen" } } )</code></pre>
@@ -439,6 +444,7 @@ db.produkte.find({"hersteller": {$regex: /^M/}})</code></pre>
 
 <section>
     <h3>Text-Score</h3>
+    <div style="position: absolute; top: 1px; right:50px; font-size:80px"><i class="fas fa-spell-check green"></i></div>
     <pre style="width: 100%;"><code class="javascript">db.produkte.find( { $text: { $search: "die guten Produkte" } },
                   { score: { $meta: "textScore" } } )</code></pre>
 
@@ -471,11 +477,13 @@ db.produkte.find({"hersteller": {$regex: /^M/}})</code></pre>
 <section>
     <h3>Sparse und partielle Indexe</h3>
     <h4>Sparse Index</h4>
+    <div style="position: absolute; top: 70px; right:50px; font-size:80px"><i class="fas fa-braille green"></i></div>
     <p class="small" style="margin-top: -4mm; margin-bottom: -4mm;">... indiziert nur Dokumente, bei denen es das Feld auch wirklich gibt:</p>
     <pre><code class="javascript">db.produkte.createIndex({verlag:1}, {sparse:true})</code></pre>
 
     <div class="fragment" style="margin-top: 14mm;">
     <h4>Partieller Index</h4>
+    <div style="position: absolute; top: 260px; right:50px; font-size:80px"><i class="fas fa-pizza-slice green"></i></div>
     <p class="small" style="margin-top: -4mm; margin-bottom: -4mm;">... indiziert nur Dokumente, die ein bestimmtes Kriterium erfüllen:</p>
     <pre><code class="javascript">db.produkte.createIndex({gewicht:1}, 
           {partialFilterExpression:{kategorie:"Lebensmittel"}})</code></pre>
@@ -487,11 +495,13 @@ db.produkte.find({"hersteller": {$regex: /^M/}})</code></pre>
 
 <section>
     <h3>Unique- und Hashed-Indexe</h3>
+    <div style="position: absolute; top: 70px; right:50px; font-size:80px"><i class="fas fa-fingerprint green"></i></div>
     <h4>Unique-Index</h4>
     <p class="small" style="margin-top: -4mm; margin-bottom: -4mm;">... passt auf, dass jeder Wert in der Collection nur einmal vorkommt:</p>
     <pre><code class="javascript">db.kunden.createIndex({email:1}, {unique:true})</code></pre>
 
     <div class="fragment" style="margin-top: 14mm;">
+        <div style="position: absolute; top: 240px; right:50px; font-size:80px"><i class="fas fa-hashtag green"></i></div>
     <h4>Hashed-Index</h4>
     <p class="small" style="margin-top: -4mm; margin-bottom: -4mm;">... trägt nicht die Werte sondern Ergebnisse einer Hash-Funktion in den Index ein:</p>
     <pre><code class="javascript">db.kunden.createIndex({email:"hashed"})</code></pre>
@@ -507,6 +517,7 @@ db.produkte.find({"hersteller": {$regex: /^M/}})</code></pre>
 
 <section>
     <h3>TTL-Indexe - Time To Live</h3>
+    <div style="position: absolute; top: 20px; right:50px; font-size:120px"><i class="fas fa-skull-crossbones green"></i></div>
 
     <p class="small">Dokument wird automatisch gelöscht, wenn<br><code>lastModifiedDate < jetzt - expireAfterSeconds</code></p>
 
@@ -575,6 +586,7 @@ insert into kunden values (ST_GEOMFROMTEXT('POINT(12.11595 49.026222)', 4326));
 select coords from kunden
 union select ST_GEOMFROMTEXT('POLYGON((6 55, 15 55, 15 47, 6 47, 6 55))', 4326);
     -->
+    <div style="position: absolute; top: 20px; right:50px; font-size:120px"><i class="fas fa-map-marked-alt green"></i></div>
     <h3>Anfragen auf Geodaten</h3>
 
     <h4><code>$near</code>: Umkreissuche</h4>
@@ -621,6 +633,7 @@ db.produkte.dropIndex({"verlag":1}); // oder wie er spezifiziert wurde</code></p
 
 <section>
     <h3>Monitoring</h3>
+    <div style="position: absolute; top: 70px; right:50px; font-size:120px"><i class="fas fa-user-md green"></i></div>
     <h4><code>mongostat</code></h4>
     <p class="small">Überblick über den Status der MongoDB-Instanz</p>
     <pre><code class="plaintext">insert query update delete getmore command dirty used flushes
@@ -643,6 +656,7 @@ vsize  res qrw arw net_in net_out conn                time
 <section>
     <h3>Monitoring</h3>
     <h4><code>mongotop [n]</code></h4>
+    <div style="position: absolute; top: 20px; right:50px; font-size:120px"><i class="fas fa-stopwatch green"></i></div>
     <p class="small">Wie lange hat MongoDB in den letzten n Sekunden mit Lesen/Schreiben verbracht?</p>
     <p class="small">Standardmäßig n = 1 (jede Sekunde)</p>
     <pre><code>                    ns    total    read    write
