@@ -367,14 +367,55 @@ db.produkte.find({"hersteller": {$regex: /^M/}})</code></pre>
         }
 }, //...
 </code></pre>
-<aside class="notes">Die Präfix Suche <code>/^M/</code> wird umgewandelt in <code>&ge;M</code> und <code>&lt;N</code>.</aside>
+<aside class="notes">Die Präfix-Suche <code>/^M/</code> wird umgewandelt in <code>&ge;M</code> und <code>&lt;N</code>.</aside>
+</section>
+
+<section>
+    <h3>Collations: Textvergleiche</h3>
+    <p class="small">Collections bestimmen, wie Suchen und Sortieren aufs Strings erfolgen sollen.</p>
+    <pre><code class="javascript">db.produkte.createIndex({bezeichnung:1}, {collation: {
+   locale:"de",
+   strength: 1,
+   numericOrdering: true  // "10" > "2"
+} } )</code></pre>
+
+<p class="small"><b>Strength</b>:</p>
+<table class="small">
+    <tr><td>1</td><td>Vergleich nur auf Base-Characters, é = è = ê = e = Ê = E</td></tr>
+    <tr><td>2</td><td>Unterscheidung zwischen diakritischen Zeichen, e &lt; è, e = E, è = È</td></tr>
+    <tr><td>3</td><td>Unterscheidung zwischen Groß- und Kleinschreibung, e &lt; è, e &lt; E, è &lt; È</td></tr>
+</table>
+
+<aside class="notes">Mit Collations können beispielsweise Case-insensitive Indexe erstellt werden. Im Index werden die String-Werte dann unabhängig von der Groß- und Kleinschreibung eingefügt.<br>
+Ohne die Option <code>numericOrdering: true</code> würden Strings, die aus Zahlen bestehen, wie Wörter sortiert werden. <code>"2"</code> wäre also größer als <code>"10"</code>.</aside>
+
+</section>
+
+<section>
+    <h3>Collations: Textvergleiche</h3>
+
+<h4>Suchen</h4>
+    <pre><code class="javascript">db.produkte.find(  // nutzt den Index nicht, findet nichts
+ {bezeichnung:"Spulmaschinentabs"})</code></pre>
+
+ <pre><code class="javascript">db.produkte.find(  // nutzt den Index, findet Spülmaschinentabs
+ {bezeichnung:"Spulmaschinentabs"})
+ .collation( { locale:"de", strength:1 } )</code></pre>
+
+ <h4>Sortieren</h4>
+ <pre><code class="javascript">db.produkte.find().collation( { locale:"de", strength:1 } )
+ .sort({bezeichnung:1}).limit(5)             // nutzt den Index</code></pre>
+
+ <h4>Default-Collation für eine Collection</h4>
+    <pre><code class="javascript">db.createCollection("produkte", {collation: { ... } )</code></pre>
+    <aside class="notes">Beim Suchen und Sortieren muss die Collation mit angegeben werden. Man kann aber eine Default-Collation für eine Collection festgelegen. Sie gilt dann für alle Indexe und Anfragen auf dieser Collection.</aside>
 </section>
 
 <section>
     <h3><code>text</code>-Indexe</h3>
     <div style="position: absolute; top: 1px; right:50px; font-size:80px"><i class="fas fa-spell-check green"></i></div>
     <pre style="width: 100%;"><code class="javascript">db.produkte.createIndex({ beschreibung: "text" },
-                        { default_language: "german" })</code></pre>
+                        { default_language: "de" })</code></pre>
     <div class="fragment">
     <p class="small">Es darf pro Collection höchstens einen Text-Index geben,<br>ein zusammengesetzter über mehrere Felder ist aber erlaubt:</p>
     <pre style="width: 100%;"><code class="javascript">db.produkte.createIndex({ bezeichnung: "text", beschreibung: "text" })</code></pre>
@@ -755,7 +796,7 @@ vsize  res qrw arw net_in net_out conn                time
     <div style="position: absolute; top: 70px; right:50px; font-size:130px"><i class="fas fa-recycle green"></i></div>
     <ul class="small">
         <li>Collection mit angegebener Maximalgröße</li>
-        <li>Ermöglichen schnelle Einfügungen</li>
+        <li>Ermöglicht schnelle Einfügungen</li>
         <li>Voll? Ältestes Dokument wird gelöscht.</li>
     </ul>
     <pre><code class="javascript">db.createCollection("Wetterdaten", 
@@ -763,7 +804,7 @@ vsize  res qrw arw net_in net_out conn                time
 
     <p class="small"><code>db.system.profile</code> ist eine Capped Collection.</p>
 
-    <aside class="notes">Eine Capped Collection (capped=gedeckelt) ist eine Collection, die eine gegebene Maximalgröße nicht überschreitet (hier: 1 MB). Würde bei einer Einfügeoperation die Collection überlaufen, wird das älteste Dokument gelöscht. </aside>
+    <aside class="notes">Eine Capped Collection (capped: gedeckelt) ist eine Collection, die eine gegebene Maximalgröße nicht überschreitet (hier: 1 MB). Würde bei einer Einfügeoperation die Collection überlaufen, wird das älteste Dokument gelöscht. </aside>
 </section>
 
 
