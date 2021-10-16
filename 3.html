@@ -345,6 +345,19 @@ db.produkte.find({"hersteller": "Monsterfood"}).sort({"preis":-1});</code></pre>
 </section>
 
 <section>
+    <h3>Covered Query</h3>
+    <p class="small">Kann rein mit dem Index beantwortet werden, ohne in die Collection zu schauen.</p>
+    <p class="small">Dazu müssen alle Felder in der Selektion und Projektion Teil eines Indexes sein.</p>
+
+    <pre><code class="javascript">db.produkte.createIndex({"hersteller":1, "preis":1})</code></pre>
+    <pre><code class="javascript">db.produkte.find({"hersteller": "Monsterfood",
+        "preis": { "$lt": NumberDecimal("1") }},
+        {"preis": 1, "_id":0});</code></pre>
+
+    <p class="small">Im Anfrageplan:<br><code>"stage" : "PROJECTION_COVERED"</code></p>
+</section>
+
+<section>
     <h3>Index-Nutzung bei der Präfix-Suche</h3>
     <pre><code class="javascript">// Produkte, deren Hersteller mit M beginnen:
 db.produkte.find({"hersteller": {$regex: /^M/}})</code></pre>
@@ -807,13 +820,54 @@ vsize  res qrw arw net_in net_out conn                time
     <aside class="notes">Eine Capped Collection (capped: gedeckelt) ist eine Collection, die eine gegebene Maximalgröße nicht überschreitet (hier: 1 MB). Würde bei einer Einfügeoperation die Collection überlaufen, wird das älteste Dokument gelöscht. </aside>
 </section>
 
-
-<!-- Move to Performance Chapter
 <section>
-	<h3>WiredTiger Storage-Engine</h3>
-	<aside class="notes">Eine Storage-Engine legt fest, wie die DB-Daten auf der Festplatte gespeichert werden. MongoDB verwendet seit Version 3.2 standardmäßig WiredTiger.</aside>
+    <h3>WiredTiger (Storage-Engine)</h3>
+    <h4>Document-Level-Concurrency</h4>
+    <p class="small" style="margin-top: -3mm;">Clients können gleichzeitig verschiedene Dokumenten modifizieren.<br>Seit MongoDB 4 werden aber auch Multi-Document-Transactions​ unterstützt.</p>
+
+    <h4>Journaling</h4>
+    <p class="small" style="margin-top: -3mm;">Änderungen ins Journal-Log schreiben, um Dauerhaftigkeit zu gewährleisten.</p>
+
+    <h4>Kompression</h4>
+    <p class="small" style="margin-top: -3mm;">WiredTiger nutzt Kompression, sodass mehr Daten in den RAM passen.<br>
+    <ul class="small">
+        <li><code>snappy</code> (Standard-Kompressionslibrary): schnell</li>
+        <li><code>lzip</code>: höherer Kompressionsgrad</li>
+        <li><code>zstd</code>: noch höherer Kompressionsgrad</li>
+        <li><code>none</code></li>
+    </ul>
+
+    <aside class="notes">Eine Storage-Engine legt fest, wie die DB-Daten auf der Festplatte gespeichert werden. MongoDB verwendet seit Version 3.2 standardmäßig WiredTiger. Will ein Client ein Dokument verändern, sperrt es dies mit einer X-Sperre, sodass kein anderer Client es gleichzeitig ändern kann.</aside>
 </section>
--->
+
+<section>
+    <h3>In-Memory-Storage-Engine</h3>
+    <pre><code class="bash">$ mongod --storageEngine inMemory</code></pre>
+    <ul class="small">
+        <li>Nur verfügbar in MongoDB Enterprise</li>
+        <li>Datenbank (Collections, Indexe, ...) muss in den RAM passen</li>
+        <li>Kein Journaling</li>
+        <li>Beim Shutdown oder Crash sind alle Daten weg</li>
+        <li>Sinnvoll bei Replikation: z. B. 1 Knoten WiredTiger + 2 Knoten InMemory</li>
+    </ul>
+    
+</section>
+
+
+<section>
+    <h3>Zusammenfassung</h3>
+    <ul class="small">
+        <li>Anfragepläne: <code>explain()</code>, <code>explain("executionStats")</code></li>
+        <li>Collection-Scan vs. Index-Scan</li>
+        <li>Indexe: Mehrdimensional, Multi-Key-Index, <code>$text</code>, sparse, partielle Indexe, Unique, Hashed, Hidden, TTL, Geo-Index</li>
+        <li>Collations</li>
+        <li>Monitoring: <code>mongostat</code>, <code>mongotop</code>, <code>db.currentOp()</code>, <code>db.killOp</code></li>
+        <li>Profiling</li>
+        <li>Storage-Engines: WiredTiger, In-Memory</li>
+
+    </ul>
+</section>
+
 
 			</div>
 		</div>
