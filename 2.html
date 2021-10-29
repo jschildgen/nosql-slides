@@ -1006,7 +1006,7 @@ db.kunden.find({"geboren":{"jahr":1980}})              // findet nichts</code></
 																</div>
 														</div>
 										</div>
-<aside class="notes">Die oberste Kategorie hat <code>"parent":null</code>, die Blätter des Baumes <code>children:[]</code>. Sowohl Parent- als auch Child-Referenzen eignen sich, um schnell die Ober- als auch Unterkategorie einer Kategorie zu finden. Der untere Ansatz (Array mit Vorfahren) eignet sich, um schnell, alle Überkategorien. Auch alle Unterkategorien sind schnell gefunden: <code>db.kategorien.find({"ancestors":"Lebensmittel"})</code> Es wurde zusätzlich das Feld <code>parent</code> eingeführt, um die direkte Überkategorie anzugeben.<br>
+<aside class="notes">Die oberste Kategorie hat <code>"parent":null</code>, die Blätter des Baumes <code>children:[]</code>. Sowohl Parent- als auch Child-Referenzen eignen sich, um schnell die direkte Ober- als auch Unterkategorie einer Kategorie zu finden. Der untere Ansatz (Array mit Vorfahren) kann schnell, alle Überkategorien finden. Auch alle Unterkategorien sind schnell gefunden: <code>db.kategorien.find({"ancestors":"Lebensmittel"})</code> Es wurde zusätzlich das Feld <code>parent</code> eingeführt, um die direkte Überkategorie anzugeben.<br>
 Die auf dieser und den vorherigen Folien präsentierten Modellierungsalternativen sind nicht vollständig. Es gibt noch jede Menge weitere Möglichkeiten, gleiche Sachverhalte zu modellieren, mit jeweils ihren Vor- und Nachteilen.</aside>
 </section>
 

@@ -1,0 +1,166 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>NoSQL-Datenbanken - Kapitel 4 - Replikation und Sharding</title>
+
+		<link rel="stylesheet" href="reveal.js/dist/reset.css">
+		<link rel="stylesheet" href="reveal.js/dist/reveal.css">
+
+        <link rel="stylesheet" href="src/slides.css">
+        <link rel="stylesheet" href="src/sql.css">
+
+		<link rel="stylesheet" href="src/layout.css">
+        <link rel="stylesheet" href="lib/joint.min.css" />
+        <link rel="stylesheet" href="src/erd.css" />
+        <link rel="stylesheet" href="src/poll.css" />
+
+		<!-- Theme used for syntax highlighting of code -->
+		<script>
+			if(window.location.search.match( /print-pdf/gi )) {
+				document.getElementsByTagName("head")[0].innerHTML += '<link rel="stylesheet" href="src/routeros.css">';
+			} else {
+				document.getElementsByTagName("head")[0].innerHTML += '<link rel="stylesheet" href="src/rainbow.css">';
+			}
+		</script>
+
+        <!--<script defer src="lib/fontawesome.all.min.js"/>-->
+        <link href="lib/fontawesome.all.min.css" rel="stylesheet">
+        <style> .reveal i.fa { font-family:FontAwesome; font-style: normal; } </style>
+	</head>
+	<body>
+		<div class="reveal">
+            <div id="header"></div>
+            <div id="footer"></div>
+			<div class="slides">
+                <section>
+                    <h4 style="text-align:center"><b>Prof. Dr.-Ing. Johannes Schildgen</b><br>
+                    <a href="mailto:johannes.schildgen@oth-regensburg.de">johannes.schildgen@oth-regensburg.de</a></h4>
+                    <h2>NoSQL-Datenbanken</h2>
+                    <h4 style="text-align:center">&nbsp;</h4>
+                    <h3>Kapitel 4: Replikation und Sharding</h3>
+                    <h4 style="text-align:center">&nbsp;<br>&nbsp;</h4>
+                    <img src="img/ccby.png" height="60px" style="position: absolute; left:0px; border:0; bottom:-160px;">
+                    <img src="img/oth.png" height="60px" style="position: absolute; right:0px; border:0; bottom:-160px; box-shadow:none">
+                </section>
+
+                <section>
+                    <h3>Replikation</h3>
+						<p class="small" style="margin-top: -5mm;">Kopien derselben Daten werden auf mehreren Rechnern gespeichert.</p>
+                        <p class="small">&Rightarrow; Hochverfügbarkeit (Fehlertoleranz gegenüber Ausfall einzelner Server)</p>
+                        <h4>In MongoDB: Replica-Sets (Master-Slave-Replikation)</h4>
+                        <ul class="small">
+                            <li>Replica Set besteht aus N Knoten, die dieselben Daten speichern
+                            <br>+ optional 1 Arbiter-Knoten (speichert keine Daten)</li>
+                            <li>Jeder Knoten ist eine <code>mongod</code>-Instanz</li>
+                            <li>1 Primary-Knoten (Master), der Rest Secondary-Knoten (Slaves)</li>
+                        </ul>
+                            <!--
+                                <ul>
+                                    <li>Primary: Schreiboperationen passieren hier,<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Leseoperationen standardmäßig auch.</li>
+                                    <li>Secondary: Hier darf auch gelesen werden.</li>
+                                </ul>
+                            </li>-->
+
+                            <div class="small"><h1><i class="fas fa-server blue"></i></h1><div style="margin-top: -1cm;">Primary</div></div>
+                            <div class="columns small">
+                                <div><h2 style="margin-top: -10mm; margin-bottom: -5mm; margin-left: 4cm;" class="">&swarr;</h2><h1><i class="fas fa-server blue"></i></h1><div style="margin-top: -1cm;">Secondary</div></div>
+                                <div><h2 style="margin-top: -10mm; margin-bottom: -5mm; margin-left: -6cm;" class="">&searr;</h2><h1><i class="fas fa-server blue"></i></h1><div style="margin-top: -1cm;">Secondary</div></div>
+                            </div>
+
+                </section>
+                
+                <section>
+                        <h3>Replikation in MongoDB</h3>
+                        <div class="columns">
+                            <div>
+                                <h4 style="margin-bottom: -5mm;">Schreiboperationen</h4>
+                                <p class="small">erfolgen auf dem Primary.</p>
+                            </div>
+                            <div>
+                                <h4 style="margin-bottom: -5mm;">Leseoperationen</h4>
+                                <p class="small">erfolgen standardmäßig auf dem Primary,
+                                    <br>sind aber auch auf Secondaries möglich.
+                                </p>
+                            </div>
+                        </div>
+
+                        <pre style="width: 7cm; position: absolute; left: 3cm;" class="fragment"><code class="javascript">db.foo.insert(...)</code></pre>
+
+                        <div class="small"><h1><i class="fas fa-server blue"></i></h1><div style="margin-top: -1cm;">Primary</div></div>
+                        <div class="columns small">
+                            <div><h2 style="margin-top: -10mm; margin-bottom: -5mm; margin-left: 4cm;" class="fragment">&swarr;</h2><h1><i class="fas fa-server blue"></i></h1><div style="margin-top: -1cm;">Secondary</div></div>
+                            <div><h2 style="margin-top: -10mm; margin-bottom: -5mm; margin-left: -6cm;" class="fragment">&searr;</h2><h1><i class="fas fa-server blue"></i></h1><div style="margin-top: -1cm;">Secondary</div></div>
+                        </div>
+                        <aside class="notes">Bei einer Master-Master- (oder Multi-Master-)Replikation dürfen mehrere Masterknoten existieren, auf die jeweils geschrieben werden darf und die sich gegenseitig synchronisieren. Da dadurch Inkonsistenzen und Konflikte entstehen können (Welches Write gewinnt?), ist ein gängiger Ansatz die Master-Slave-Replikation, so auch in MongoDB. In MongoDB wird ein Master automatisch gewählt.</aside>
+                </section>
+
+                <section>
+                    <h3>Asynchrone vs. synchrone Repl.</h3>
+                    <h4 style="margin-bottom: -5mm;">Asynchrone Replikation: $w = 1$</h4>
+                    <p class="small">Client schreibt auf Primary, bekommt das ACK, danach wird repliziert.
+                        <br>&Rightarrow; Replikation ist eine separate Transaktion.</p>
+                    </p>
+
+                    <h4 style="margin-bottom: -5mm;">Synchrone Replikation: $w = N$</h4>
+                    <p class="small">Client schreibt auf Primary, dann wird repliziert, dann bekommt er das ACK.
+                <br>&Rightarrow; Replikation ist Teil der Transaktion.</p>
+
+                    <h4 style="margin-bottom: -5mm;">Write-Concern: $0 \le w \le N$</h4>
+                    <p class="small">Client bekommt ACK, wenn die Schreiboperation auf $w$ Knoten ausgeführt wurde.</p>
+
+                    <aside class="notes">Bei synchroner Replikation muss eine Client-Anwendung warten, bis die Änderungen, die sie ausführt, auf allen Rechnern durchgeführt wurde. Das dauert oft zu lange, vor allem, wenn Slaves temporär offline gehen. Bei MongoDB wird daher standardmäßig asynchrone Replikation eingesetzt. Das heißt, der Primary gibt dem Client die Bestätitigung (ACK), dass die Änderungen ausgeführt wurden, sobald er dies abgeschlossen hat. Erst danach erfolgt die Weitergabe der Aktionen an die Secondaries. Kurzzeitig sind die Secondaries also in einem inkonsistenten und damit veralteten Zustand. ​</aside>
+                </section>
+
+                <section>
+                    <h3>Write-Concern</h3>
+
+                    <pre><code class="javascript">db.personen.insertOne( { name:"Rita" }, 
+        { writeConcern: { w : "majority", wtimeout : 100 } } )</code></pre>
+
+                    <pre><code class="python">import pymongo​                                        # Python
+c = pymongo.MongoClient(host=["mongodb://pc1:27017"], w=3)​
+db = c.test​
+doc = db.personen.find_one({"name":"Franka"})​
+print(doc)​
+db.personen.insert({"name":"Timo"})​</code></pre>
+
+                    <aside class="notes">Legt der Client ein Write-Concern fest, bekommt er sein ACK vom Primary erst, wenn seine Schreiboperation mindestens $w$ Rechner erreicht hat. Bei $w=1$ gibt es dass ACK, wenn der Primary das Schreiben lokal ausgeführt hat, $w=2$ wäre Primary plus irgendein Secondary. w=majority ist der Fall wenn mehr als die Hälfte der Rechner die Schreiboperation durchgeführt haben (bei 3 Knoten also 2). Sogar $w=0$ ist möglich. Dann bekommt der Client gar keine Bestätigung (höchstens mal eine Exception) vom Master. Er kann dann also gar nicht sicher sein, dass die Schreiboperation überhaupt ausgeführt wurde. Das Write-Concern kann für eine Operation (z. B. <code>insert</code>) oder eine Connection (also vom Client) festgelegt werden, aber auch für eine ganze Collection, sodass alle Clients standardmäßig ein gewissen Wert für $w$ haben. Der Wert kann auch global für ein komplettes ReplicaSet gesetzt werden. Der Standard ist $w=1$.​ Wichtig bei Replikation: Da in diesem Python-Beispiel ein Insert ausgeführt wird, muss der Knoten, mit dem sich hier verbunden wird, der Primary, also der Replication-Master sein.​</aside>
+                </section>
+
+                <section>
+                    <h3>Oplog</h3>
+                </section>
+
+
+
+			</div>
+		</div>
+
+		<script src="reveal.js/dist/reveal.js"></script>
+		<script src="reveal.js/plugin/markdown/markdown.js"></script>
+		<script src="reveal.js/plugin/highlight/highlight.js"></script>
+		<script src="reveal.js/plugin/zoom/zoom.js"></script>
+		<script src="reveal.js/plugin/math/math.js"></script>
+		<script src="reveal.js/plugin/notes/notes.js"></script>
+		<script src="reveal.js/plugin/search/search.js"></script>
+        <script src="lib/jquery.js"></script>
+        <script src="lib/lodash.js"></script>
+        <script src="lib/backbone.js"></script>
+        <script src="lib/joint.min.js"></script>
+				<script src="lib/deflate.js"></script>
+
+		<script src="src/init_reveal.js"></script>
+
+        <script>
+        if(window.location.search.match( /print-pdf/gi )) {
+                document.getElementById('header').style="display:none";
+                document.getElementById('footer').style="display:none";
+        }
+        </script>
+
+
+	</body>
+</html>
