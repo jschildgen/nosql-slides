@@ -73,6 +73,52 @@
                 </section>
                 
                 <section>
+                    <h3>Replikation starten und einrichten</h3>
+                    <p class="small"><b>1. <code>mongod</code> auf den Replikas starten</b> (hier: 3x auf localhost)</p>
+                    <pre><code class="bash">mongod --replSet "rs0" --port 27011 --dbpath /data/data1
+mongod --replSet "rs0" --port 27012 --dbpath /data/data2
+mongod --replSet "rs0" --port 27013 --dbpath /data/data3</code></pre>
+
+                    <p class="small"><b>2. Auf irgendeinem der Replika in der <code>mongo</code>-Shell Replikation initialisieren:</b></p>
+                    <pre><code class="javascript">> rs.initiate( {
+    _id : "rs0",
+    members: [
+        { _id: 0, host: "localhost:27011" },
+        { _id: 1, host: "localhost:27012" },
+        { _id: 2, host: "localhost:27013" }
+    ]
+})</code></pre>
+<aside class="notes">In der Praxis laufen die einzelnen <code>mongod</code>-Instanzen natürlich jeweils auf verschiedenen Rechnern. Hier läuft zu Testzwecken alles auf localhost. Zum Initialisieren verbindet man sich mit einem beliebigen Replika (z. B. <code>mongo --port 27011</code>) und übergibt die Konfiguration des Replication-Sets. Wichtig ist, alle Replikas unter Angabe eines gemeinsamen Replika-Set-Namens (hier: <code>"rs0"</code>) zu starten und diesen Namen auch in der Konfiguration anzugeben.</aside>
+                </section>
+
+                <section>
+                    <h3><code>rs.status()</code></h3>
+                    <pre><code class="javascript" style="max-height: 30cm;">rs0:PRIMARY> rs.status()
+{
+    "set" : "rs0",
+    "myState" : 1,     // 1: ich bin PRIMARY, 2: SECONDARY
+    // ...
+    "members" : [ 
+    {    
+        "_id" : 0,
+        "name" : "localhost:27011",
+        "state" : 1,
+        "stateStr" : "PRIMARY",
+        // ...
+    }, 
+    {
+        "_id" : 1,
+        "name" : "localhost:27012",
+        "state" : 2,
+        "stateStr" : "SECONDARY"
+    }
+    //...
+</code></pre>
+
+<aside class="notes">An dem <code>rs0:PRIMARY></code> bzw. <code>rs0:SECONDARY></code> in der Mongo-Shell erkennt man, ob man mit dem Primary oder einem Secondary verbunden ist. <code>rs.status()</code> zeigt die Konfiguration und den Zustand (sind Knoten offline? ...) der Replikation an.</aside>
+                </section>
+
+                <section>
                         <h3>Replikation in MongoDB</h3>
                         <div class="columns">
                             <div>
@@ -87,14 +133,71 @@
                             </div>
                         </div>
 
-                        <pre style="width: 7cm; position: absolute; left: 3cm;" class="fragment"><code class="javascript">db.foo.insert(...)</code></pre>
+                        <pre style="width: 8cm; position: absolute; left: 2cm;" class="fragment"><code class="javascript">db.foo.insertOne(...)</code></pre>
 
                         <div class="small"><h1><i class="fas fa-server blue"></i></h1><div style="margin-top: -1cm;">Primary</div></div>
                         <div class="columns small">
                             <div><h2 style="margin-top: -10mm; margin-bottom: -5mm; margin-left: 4cm;" class="fragment">&swarr;</h2><h1><i class="fas fa-server blue"></i></h1><div style="margin-top: -1cm;">Secondary</div></div>
                             <div><h2 style="margin-top: -10mm; margin-bottom: -5mm; margin-left: -6cm;" class="fragment">&searr;</h2><h1><i class="fas fa-server blue"></i></h1><div style="margin-top: -1cm;">Secondary</div></div>
                         </div>
-                        <aside class="notes">Bei einer Master-Master- (oder Multi-Master-)Replikation dürfen mehrere Masterknoten existieren, auf die jeweils geschrieben werden darf und die sich gegenseitig synchronisieren. Da dadurch Inkonsistenzen und Konflikte entstehen können (Welches Write gewinnt?), ist ein gängiger Ansatz die Master-Slave-Replikation, so auch in MongoDB. In MongoDB wird ein Master automatisch gewählt.</aside>
+                        <aside class="notes">Bei einer Master-Master- (oder Multi-Master-)Replikation dürfen mehrere Masterknoten existieren, auf die jeweils geschrieben werden darf und die sich gegenseitig synchronisieren. Da dadurch Inkonsistenzen und Konflikte entstehen können (Welches Write gewinnt?), ist ein gängiger Ansatz die Master-Slave-Replikation, so auch in MongoDB. In MongoDB wird der Master (PRIMARY) automatisch gewählt.</aside>
+                </section>
+
+                <section>
+                    <h3><code>rs.secondaryOk()</code></h3>
+                    <p class="small">Leseoperationen sind auf Secondaries nur mit slaveOk möglich:</p>
+                    <pre><code class="javascript">rs0:SECONDARY> db.kunden.count()</code></pre>
+                    <p class="small"><i class="red">"errmsg" : "not master and slaveOk=false"</i></p>
+                    <div class="fragment">
+                    <h4>rs.secondaryOk()</h4>
+                    <p class="small">Keine Garantie für Strong Consistency.<br>Lesen noch nicht synchronisierter Daten möglich.</p>
+                    <pre><code class="plaintext">rs0:SECONDARY> rs.secondaryOk()
+rs0:SECONDARY> db.kunden.count()
+3</code></pre>
+</div>
+<aside class="notes">Mit <code>db.secondaryOk()</code> gibt man das Einverständnis, möglicherweise veraltete Daten zu lesen. Es könnte ja sein, dass Dokumente eingefügt, geändert oder gelöscht wurden, diese Änderung aber noch nicht auf den Secondary, mit dem man gerade verbunden ist, synchronisiert wurde, z. B. wegen Netzwerkverzögerungen.</aside>
+                </section>
+
+               
+
+                <section>
+                    <h3>Strong vs. Eventual Consistency</h3>
+                    <p class="small">ACID fordert Strong Consistency!</p>
+                    <h4>Strong Consistency</h4>
+                    <pre><code class="javascript">rs0:PRIMARY> db.kunden.count()
+4   // das ist stets der tatsächliche aktuelle Wert!</code></pre>
+
+<div class="fragment">
+<h4>Eventual Consistency (eventual &wedgeq; schließlich)</h4>
+                    <pre><code class="plaintext">rs0:SECONDARY> rs.secondaryOk()
+rs0:SECONDARY> db.kunden.count()
+3
+rs0:SECONDARY> db.kunden.count()
+3
+rs0:SECONDARY> db.kunden.count()
+4</code></pre></div>
+<aside class="notes">Eine Möglichkeit, strong Consistency in MongoDB zu erreichen, also in jedem Fall aktuelle Daten zu lesen, ist das Lesen vom Primary. Eine andere Möglichkeit ist mittels eines Write-Concerns möglich (siehe übernächste Folie).</aside>
+                </section>
+
+                <section>
+                    <h3>Read Preference</h3>
+                    <pre style="width: 100%;"><code class="python">import pymongo​                                                 # Python
+c = pymongo.MongoClient(host=["mongodb://pc1:27017", 
+     "mongodb://pc3:27017", "mongodb://pc3:27017"], 
+     read_preference=pymongo.read_preferences.ReadPreferency.SECONDARY​)​
+db = c.test​
+doc = db.personen.find_one({"name":"Franka"})​
+print(doc)​​</code></pre>
+
+<h4>Read Preference: Mit wem verbinden zum Lesen?</h4>
+<ul style="font-size: 90%; margin-top: -5mm;">
+    <li><b><code>PRIMARY</code></b> &Rightarrow; Strong Consistency</li>
+    <li><b><code>PRIMARY_PREFERRED</code></b></li>
+    <li><b><code>SECONDARY</code></b></li>
+    <li><b><code>SECONDARY_PREFERRED</code></b></li>
+    <li><b><code>NEAREST</code></b> (der Knoten mit kleinstem Ping)</li>
+</ul>
+<aside class="notes">Wenn sich Anwendungen mit MongoDB verbinden, gibt man alle Knoten mit an sowie eine Read-Preference. Der Treiber verbindet einen dann mit dem entsprechenden Knoten. <code>_PREFERRED</code> bedeutet, dass auch von Secondary bzw. Primary gelesen wird, sollte kein Primary bzw. Secondary verfügbar sein.</aside>
                 </section>
 
                 <section>
@@ -106,7 +209,8 @@
 
                     <h4 style="margin-bottom: -5mm;">Synchrone Replikation: $w = N$</h4>
                     <p class="small">Client schreibt auf Primary, dann wird repliziert, dann bekommt er das ACK.
-                <br>&Rightarrow; Replikation ist Teil der Transaktion.</p>
+                <br>&Rightarrow; Replikation ist Teil der Transaktion.
+                <br>&Rightarrow; Strong Consistency</p>
 
                     <h4 style="margin-bottom: -5mm;">Write-Concern: $0 \le w \le N$</h4>
                     <p class="small">Client bekommt ACK, wenn die Schreiboperation auf $w$ Knoten ausgeführt wurde.</p>
@@ -125,9 +229,124 @@ c = pymongo.MongoClient(host=["mongodb://pc1:27017"], w=3)​
 db = c.test​
 doc = db.personen.find_one({"name":"Franka"})​
 print(doc)​
-db.personen.insert({"name":"Timo"})​</code></pre>
+db.personen.insert_one({"name":"Timo"})​</code></pre>
 
                     <aside class="notes">Legt der Client ein Write-Concern fest, bekommt er sein ACK vom Primary erst, wenn seine Schreiboperation mindestens $w$ Rechner erreicht hat. Bei $w=1$ gibt es dass ACK, wenn der Primary das Schreiben lokal ausgeführt hat, $w=2$ wäre Primary plus irgendein Secondary. w=majority ist der Fall wenn mehr als die Hälfte der Rechner die Schreiboperation durchgeführt haben (bei 3 Knoten also 2). Sogar $w=0$ ist möglich. Dann bekommt der Client gar keine Bestätigung (höchstens mal eine Exception) vom Master. Er kann dann also gar nicht sicher sein, dass die Schreiboperation überhaupt ausgeführt wurde. Das Write-Concern kann für eine Operation (z. B. <code>insert</code>) oder eine Connection (also vom Client) festgelegt werden, aber auch für eine ganze Collection, sodass alle Clients standardmäßig ein gewissen Wert für $w$ haben. Der Wert kann auch global für ein komplettes ReplicaSet gesetzt werden. Der Standard ist $w=1$.​ Wichtig bei Replikation: Da in diesem Python-Beispiel ein Insert ausgeführt wird, muss der Knoten, mit dem sich hier verbunden wird, der Primary, also der Replication-Master sein.​</aside>
+                </section>
+
+                <section>
+                    <h3>Strong Consistency</h3>
+                    <p class="small"><img src="img/1/mongodb.png" class="noborder" style="margin-top:-5mm; margin-bottom:-5mm">: Strong Consistency, wenn $w=N$ oder<br><code style="margin-left: 12.5cm;">read_preference=PRIMARY</code><br>(weil Schreiboperationen immer nur auf dem Primary erfolgen)</p>
+                    <p class="small">Im Allgemeinen: $r + w \gt N$<br>(wenn Schreiboperationen auf beliebigen Knoten erfolgen können)</p>
+                    <ul class="small">
+                        <li>$r$ - Anzahl Knoten, von denen gelesen wird (bei MongoDB immer 1)</li>
+                        <li>$w$ - So viele Knoten müssen das Write bestätigen (Write Concern)</li>
+                        <li>$N$ - Anzahl der Knoten im Replika-Set insgesamt</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h3>Strong Consistency: $r + w \gt N$</h3>
+                    <p class="small">Beispiel: $r = 1, w = 3, N = 3$</p>
+                    <div class="columns">
+                        <div><h1><i class="fas fa-server blue"></i></h1><p class="small" style="margin-top: -10mm;"><code class="fragment fade-out" data-fragment-index="1">preis:4€</code><br><code class="fragment" data-fragment-index="1">preis:5€</code></p></div>
+                        <div><h1><i class="fas fa-server blue"></i></h1><p class="small" style="margin-top: -10mm;"><code class="fragment fade-out" data-fragment-index="1">preis:4€</code><br><code class="fragment" data-fragment-index="1">preis:5€</code></p></div>
+                        <div><h1><i class="fas fa-server blue"></i></h1><p class="small" style="margin-top: -10mm;"><code class="fragment fade-out" data-fragment-index="1">preis:4€</code><br><code class="fragment" data-fragment-index="1">preis:5€</code><br><span class="fragment">&uparrow; lesen<br>(aktueller Wert)</span></p></div>
+                    </div>
+                    <aside class="notes">Hier wird ein Write-Concern von $w = 3$ verwendet. Es wird also beim Schreiben abgewartet, bis die Schreiboperation auf allen Knoten ausgeführt wurde. Danach ist es egal, von welchem Knoten man liest, man erhält aktuelle Daten.</aside>
+                </section>
+
+                <section>
+                    <h3>Strong Consistency: $r + w \gt N$</h3>
+                    <p class="small">Beispiel: $r = 3, w = 1, N = 3$</p>
+                    <div class="columns">
+                        <div><h1><i class="fas fa-server blue"></i></h1><p class="small" style="margin-top: -10mm;"><code class="fragment fade-out" data-fragment-index="1">preis:4€</code><br><code class="fragment" data-fragment-index="1">preis:5€</code><br><span class="fragment" data-fragment-index="2"><span class="fragment fade-out" data-fragment-index="3">&uparrow; lesen<br>(aktueller Wert)</span></span></p></div>
+                        <div><h1><i class="fas fa-server blue"></i></h1><p class="small" style="margin-top: -10mm;"><code class="fragment fade-out" data-fragment-index="3">preis:4€</code><br><code class="fragment" data-fragment-index="3">preis:5€</code><br><span class="fragment" data-fragment-index="2"><span class="fragment fade-out" data-fragment-index="3">&uparrow; lesen</span></span></p></div>
+                        <div><h1><i class="fas fa-server blue"></i></h1><p class="small" style="margin-top: -10mm;"><code class="fragment fade-out" data-fragment-index="3">preis:4€</code><br><code class="fragment" data-fragment-index="3">preis:5€</code><br><span class="fragment" data-fragment-index="2"><span class="fragment fade-out" data-fragment-index="3">&uparrow; lesen</span></span></p></div>
+                    </div>
+                    <aside class="notes">In diesem Beispiel wird nach dem Schreiben weitergemacht, wenn die Schreiboperation von einem Knoten bestätigt wurde ($w = 1$). Um nun Strong Consistency zu gewährleisten, muss von allen Knoten gelesen werden. Dann ist ja in jedem Falle auch derjenige dabei, auf dem das Schreiben bereits durchgeführt wurde. Anhand von Timestamps kann der Client dann ermitteln, welche Version eines Wertes die aktuellste ist. Bei Redis lässt sich dieses Verhalten so umsetzen. In MongoDB liest man immer nur von einem Knoten. Ist das der Primary, haben wir stets strong Consistency, da dort ja auch geschrieben wurde. Bei Redis darf überall geschrieben werden.</aside>
+                </section>
+
+                <section>
+                    <h3>Strong Consistency: $r + w \gt N$</h3>
+                    <p class="small">Beispiel: $r = 2, w = 2, N = 3$</p>
+                    <div class="columns">
+                        <div><h1><i class="fas fa-server blue"></i></h1><p class="small" style="margin-top: -10mm;"><code class="fragment fade-out" data-fragment-index="1">preis:4€</code><br><code class="fragment" data-fragment-index="1">preis:5€</code></p></div>
+                        <div><h1><i class="fas fa-server blue"></i></h1><p class="small" style="margin-top: -10mm;"><code class="fragment fade-out" data-fragment-index="3">preis:4€</code><br><code class="fragment" data-fragment-index="3">preis:5€</code><br><span class="fragment" data-fragment-index="2"><span class="fragment fade-out" data-fragment-index="3">&uparrow; lesen</span></span></p></div>
+                        <div><h1><i class="fas fa-server blue"></i></h1><p class="small" style="margin-top: -10mm;"><code class="fragment fade-out" data-fragment-index="1">preis:4€</code><br><code class="fragment" data-fragment-index="1">preis:5€</code><br><span class="fragment" data-fragment-index="2"><span class="fragment fade-out" data-fragment-index="3">&uparrow; lesen<br>(aktueller Wert)</span></span></p></div>
+                    </div>
+                    <aside class="notes">Ist $r + w \gt N$, überlappen sich das Read-Set und das Write-Set. Beim Lesen ist also in jedem Falle mindestens ein Knoten dabei, auf dem die neusten Daten bereits geschrieben wurden.</aside>
+                </section>
+
+                <section>
+                    <h3>Eventual Consistency: $r + w \le N$</h3>
+                    <p class="small">Beispiel: $r = 1, w = 2, N = 3$</p>
+                    <div class="columns">
+                        <div><h1><i class="fas fa-server blue"></i></h1><p class="small" style="margin-top: -10mm;"><code class="fragment fade-out" data-fragment-index="1">preis:4€</code><br><code class="fragment" data-fragment-index="1">preis:5€</code></p></div>
+                        <div><h1><i class="fas fa-server blue"></i></h1><p class="small" style="margin-top: -10mm;"><code class="fragment fade-out" data-fragment-index="3">preis:4€</code><br><code class="fragment" data-fragment-index="3">preis:5€</code><br><span class="fragment" data-fragment-index="2"><span class="fragment fade-out" data-fragment-index="3">&uparrow; lesen<br>(veralteter Wert)</span></span></p></div>
+                        <div><h1><i class="fas fa-server blue"></i></h1><p class="small" style="margin-top: -10mm;"><code class="fragment fade-out" data-fragment-index="1">preis:4€</code><br><code class="fragment" data-fragment-index="1">preis:5€</code></p></div>
+                    </div>
+
+                    <aside class="notes">Für alle Fälle, in denen $r + w \le N$ gilt, kann keine Konsistenz garantiert werden. Es kann sein, dass der Knoten, von dem man liest, noch nicht die Änderungen erhalten hat, die kürzlich geschrieben wurden.</aside>
+                </section>
+
+                <section>
+                    <h2>ACID, BASE, CAP-Theorem</h2>
+                    <h4>ACID</h4>
+                    <ul>
+                        <li><b>Atomarität</b><br>Alles-oder-Nichts-Prinzip​</li>
+                        <li><b>Konsistenz</b><br>Transaktion hinterlässt konsistenten DB-Zustand​</li>
+                        <li><b>Isolation</b><br>Parallel laufenden TAs beeinflussen sich nicht ​​</li>
+                        <li><b>Dauerhaftigkeit</b><br>Committete Änderungen gehen nicht verloren​</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h2>ACID, BASE, CAP-Theorem</h2>
+                    <h4>BASE</h4>
+                    <ul style="width: 55cm;">
+                        <li><b>Basically Available</b><br>DB akzeptiert und beantwortet Anfragen (meistens)​</li>
+                        <li><b>Soft State</b><br>Es dauert, bis sich der DB-Zustand synchronisiert hat</li>
+                        <li><b>Eventual Consistent</b><br>Irgendwann ist die DB wieder in konsistentem Zustand​​</li>
+                    </ul>
+
+                    <aside class="notes">Das Akronym BASE wird gerne vor allem in NoSQL-Datenbanken als Gegenstück für die strengen ACID-Eigenschaften verwendet, die vor allem meist in relationalen Datenbanken gefordert werden. Oft wird beispielsweise in Web-Anwendungen wie sozialen Netzwerken kein striktes ACID verlangt. Lockert man es auf und sagt, dass BASE ausreichend ist, kann dies zu enormen Performance-Vorteilen führen. Eventual Consistency wäre in ACID-DBs undenkbar. Soft State ebenso: Man liest zweimal das gleiche, niemand hat die Daten zwischenzeitlich geändert, trotzdem kommt zweimal was unterschiedliches raus.</aside>
+                </section>
+
+                <section>
+                    <h2>ACID, BASE, CAP-Theorem</h2>
+                    <h4>CAP-Theorem</h4>
+                    <ul>
+                        <li><b>Consistency</b> <br>DB liefert stets den aktuellen Wert</li>
+                        <li><b>Availability</b> <br>DB liefert stets eine Antwort auf Anfragen</li>
+                        <li><b>Partition Tolerance</b> <br>DB funktioniert auch, wenn mal etwas ausfällt</li>
+                    </ul>
+                    <p><b><em>Nur max. 2 dieser Eigenschaften lassen sich erreichen!</em></b></p>
+                    <aside class="notes">Unter einer Netzwerkpartition versteht man, dass im Netzwerk ein Knoten einen anderen im Moment nicht erreichen kann, z. B. bei Netzwerkproblemen oder wenn der Knoten vorübergehend offline ist. Partition Tolerance bedeutet, dass das System in einem solchen Fall dennoch weiter funktioniert.</aside>
+                </section>
+
+                <section>
+                    <h3>CAP-Theorem</h3>
+                    <p class="small">In einem verteilten DBMS brauchen wir Partition Tolerance.<br>
+                    Netzwerkpartitionen können nunmal auftreten.</p>
+
+                    <div class="columns" style="margin-top:-3mm">
+                        <div><h1><i class="fas fa-server blue"></i></h1><p class="small" style="margin-top: -10mm;"><code class="fragment fade-out" data-fragment-index="1">preis:4€</code><br><code class="fragment" data-fragment-index="1">preis:5€</code></p></div>
+                        <div><h1><i class="fas fa-server blue"></i></h1><p class="small" style="margin-top: -10mm;"><code class="fragment fade-out" data-fragment-index="1">preis:4€</code><br><code class="fragment" data-fragment-index="1">preis:5€</code></p></div>
+                        <div><h1><i class="fas fa-server red"></i></h1><p class="small" style="margin-top: -10mm;"><code>preis:4€</code></p></div>
+                    </div>
+
+                    <div class="fragment">
+                    <h4 style="margin-top: -3mm; margin-bottom: -5mm;">CP: Consistency + Partition Tolerance</h4>
+                    <p class="small">Warten, bis Knoten 3 sich wieder synchronisiert hat. &Rightarrow; keine Availability.</p>
+                    </div>
+
+                    <div class="fragment">
+                    <h4 style="margin-top: -3mm; margin-bottom: -5mm;">AP: Availability + Partition Tolerance</h4>
+                    <p class="small">Beim Lesen von Knoten 3 liest man veraltete Daten. &Rightarrow; keine Consistency.</p>
+                    </div>
+
+                    <aside class="notes">In MongoDB hat man die Wahl zwischen CP und AP über die Read Preference. Liest man vom Primary, hat man Konsistenz, liest man auch von Secondaries, hat man Availability. Standard ist also CP.</aside>
                 </section>
 
                 <section>
