@@ -350,11 +350,121 @@ db.personen.insert_one({"name":"Timo"})​</code></pre>
                 </section>
 
                 <section>
-                    <h3>Oplog</h3>
+                    <h3>Binäre vs. Statement-basierte Replikation</h3>
+                    <h4>Binäre Replikation</h4>
+                    <p class="small">Master an Slaves nach jedem Write: "In Datei XYZ hat sich bei Offset 234 folgendes geändert: 0010101010010010001001010010010101001010001111101001010101"</p>
+                    
+                    <div class="fragment">
+                    <h4>Statement-basierte Replikation &leftarrow; <img src="img/1/mongodb.png" class="noborder" style="margin-top:-5mm; margin-bottom:-5mm"></h4>
+                    <ul class="small">
+                        <li>Client schickt Write-Statement an Primary</li>
+                        <li>Primary schreibt das Statement in die Collection <code>oplog.rs</code> (DB <code>local</code>)</li>
+                        <li>Secondaries holen sich kontinuierlich Änderungen aus der Oplog<br>und führen sie aus</li>
+                    </ul>
+                    <p class="fragment small" style="width: 50cm; margin-top: 3mm;">(+) Verschiedene Storage-Engines auf Knoten möglich (z. B. In-Memory auf Primary)</p>
+                    </div>
+                    <aside class="notes">Binäre Replikation verursacht in der Regel weniger Datenverkehr über das Netzwerk. Dennoch verwendet MongoDB Statement-basierte Replikation. Hier werden statt konkreten binären Änderungen in der Datenbank lediglich die Statements an die Secondaries weitergeleitet.</aside>
                 </section>
 
+                <section>
+                    <h3>Oplog</h3>
+                    <p class="small">Beispiel: Ein neuer Kunde wird eingefügt.</p>
+                    <pre style="width: 100%;"><code class="javascript">rs0:PRIMARY> db.kunden.insertOne( { name: "Peter" } )
+WriteResult({ "nInserted" : 1 })</code></pre>
 
+<div class="fragment">
+                    <h4>Oplog (Capped Collection): <code>oplog.rs</code> in DB <code>local</code></h4>
+                    <pre style="width: 100%;"><code class="javascript">rs0:PRIMARY> use local
+rs0:PRIMARY> db.oplog.rs.find()
+{
+    "op" : "i",
+    "ns" : "test.kunden",
+    "ui" : UUID("ba043302-1592-4c7a-95b0-100a6c306457"),
+    "o" : {
+            "_id" : ObjectId("6197c6014f6105b1ed3555c9"),
+            "name" : "Peter"
+    },
+    "ts" : Timestamp(1637336577, 1),
+    // ...                    
+}</code></pre>
+</div>
+    <aside class="notes">Die Insert-Operation taucht in der Oplog auf, jedoch ist dort auch der Wert des <code>_id</code>-Feldes angegeben, damit diese auf allen Knoten einheitlich ist und damit die Operation im Oplog idempotent ist. Idempotent heißt, es würde keinen Unterschied machen, ob man die Operation einfach oder mehrmals ausführt.</aside>
+                </section>
 
+                <section>
+                    <h3>Oplog</h3>
+                    <p class="small">Beispiel: Zwei Kunden werden gelöscht.</p>
+                    <pre style="width: 100%;"><code class="javascript">rs0:PRIMARY> db.kunden.deleteMany( { name: {$in:["Peter", "Ute"]} } )
+{ "acknowledged" : true, "deletedCount" : 2 }</code></pre>
+
+                    <pre style="width: 100%;"><code class="javascript" style="max-height: 25cm;">{
+    "op" : "d", "ns" : "test.kunden",
+    "o" : {
+            "_id" : ObjectId("6197bd854f6105b1ed3555c8")
+    },
+    "ts" : Timestamp(1637336633, 1),
+    // ...
+}
+{
+    "op" : "d", "ns" : "test.kunden",
+    "o" : {
+            "_id" : ObjectId("6197c6014f6105b1ed3555c9")
+    },
+    "ts" : Timestamp(1637336633, 2),
+    // ...
+}</code></pre>
+<aside class="notes">Jede Operation im Oplog ist idempotent. Das eine <code>deleteMany</code>-Statement wurde aufgesplittet in zwei einzelne Deletes konkreter Dokumente unter Angabe ihrer <code>_id</code>s.</aside>
+                </section>
+
+                <section>
+                    <h3>Automatischer Failover</h3>
+                    <div class="columns small">
+                        <div style="font-size:102%"><h1><div style="position: relative; margin-top:3mm;">
+                            <i style="position: absolute;" class="fas fa-server blue fragment fade-out" data-fragment-index="1"></i>
+                            <i style="position: absolute;" class="fas fa-server red fragment" data-fragment-index="1" data-badge="Ausfall!" data-badge-position="tl"></i>
+                        </div></h1><div style="margin-top: 2.9cm; padding-left: 28mm;">Primary</div></div>
+                        <div><h1><i class="fas fa-server blue"></i></h1><div style="margin-top: -1cm;">Secondary
+                        <div class="fragment" data-fragment-index="2" style="font-size:smaller">"Wir brauchen einen<br>neuen Master!"</div></div></div>
+                        <div><h1><i class="fas fa-server blue"></i></h1><div style="margin-top: -1cm;">Secondary
+                            <div class="fragment" data-fragment-index="3"  style="font-size:smaller">"Ja, wir brauchen<br>einen neuen Master!"</div></div></div>
+                    </div>
+                    <p></p>
+
+                    <div class="fragment" data-fragment-index="4">
+                    <h4>Wahl eines neuen Masters</h4>
+                    <p style="margin-top: -3mm;" class="small"><b>Consenus</b>: &#8532;-Mehrheit an Stimmen erforderlich, um neuen Master zu bestimmen.​</p>
+                    </div>
+
+                    <div class="columns fragment small" data-fragment-index="5">
+                        <div style="font-size:102%"><h1><div style="position: relative; margin-top:3mm;">
+                            <i style="position: absolute;" class="fas fa-server blue fragment" data-fragment-index="6"></i>
+                            <i style="position: absolute;" class="fas fa-server red fragment fade-out" data-badge="Ausfall!" data-badge-position="tl" data-fragment-index="6"></i>
+                        </div></h1><div style="margin-top: 2.9cm; padding-left: 28mm;" class="fragment" data-fragment-index="6">Secondary</div></div>
+                        <div><h1><i class="fas fa-server blue"></i></h1><div style="margin-top: -1cm;">Primary</div></div>
+                        <div><h1><i class="fas fa-server blue"></i></h1><div style="margin-top: -1cm;">Secondary</div></div>
+                    </div>
+
+                    <aside class="notes">Wenn der Primary ausfällt, merken das die Secondaries daran, dass sie von ihm keinen Heartbeat mehr bekommen bzw. daran, dass Pings nicht beantwortet werden. Slaves können aber auch zu unrecht denken, dass der Master ausgefallen ist, z.B. wenn die Netzwerkverbindung zwischen Master und einem Slave unterbrochen wird. Deshalb besagt der Consensus-Algorithmus, dass mindestens zwei drittel der Rechner der Meinung sein müssen, dass sie einen neuen Master brauchen. Erst dann wird ein neuer Master bestimmt. Einer der Secondaries wird dann zum Primary, also zum neuen Master.​ Ist der ausgefallene Knoten wieder verfügbar, wird er selbst zum Secondary und bringt sich wieder mithilfe der Oplog des Masters auf den aktuellen Stand.</aside>
+                    
+                </section>
+
+                <section>
+                    <h3>Wer wird Primary?</h3>
+                    <h4>Priorities</h4>
+                    <p class="small" style="margin-top: -3mm;">Höhere Priority &Rightarrow; höhere Wahrscheinlichkeit zum Master gewählt zu werden.</p>
+                    <pre><code class="javascript">cfg = rs.conf()
+cfg.members[0].priority = 0.5
+cfg.members[1].priority = 2
+cfg.members[2].priority = 2
+rs.reconfig(cfg)</code></pre>
+
+<div class="fragment">
+    <h4><code>rs.stepDown()</code></h4>
+    <p class="small" style="margin-top: -3mm;">Damit wird der Primary nun zum Secondary.</p>
+    <pre><code class="plaintext">rs0:PRIMARY> rs.stepDown()
+rs0:SECONDARY></code></pre>
+</div>
+                </section>
 			</div>
 		</div>
 
