@@ -79,7 +79,7 @@
 mongod --replSet "rs0" --port 27012 --dbpath /data/data2
 mongod --replSet "rs0" --port 27013 --dbpath /data/data3</code></pre>
 
-                    <p class="small"><b>2. Auf irgendeinem der Replika in der <code>mongo</code>-Shell Replikation initialisieren:</b></p>
+                    <p class="small"><b>2. Auf irgendeinem der Replikas in der <code>mongo</code>-Shell Replikation initialisieren:</b></p>
                     <pre><code class="javascript">> rs.initiate( {
     _id : "rs0",
     members: [
@@ -140,6 +140,18 @@ mongod --replSet "rs0" --port 27013 --dbpath /data/data3</code></pre>
                             <div><h2 style="margin-top: -10mm; margin-bottom: -5mm; margin-left: 4cm;" class="fragment">&swarr;</h2><h1><i class="fas fa-server blue"></i></h1><div style="margin-top: -1cm;">Secondary</div></div>
                             <div><h2 style="margin-top: -10mm; margin-bottom: -5mm; margin-left: -6cm;" class="fragment">&searr;</h2><h1><i class="fas fa-server blue"></i></h1><div style="margin-top: -1cm;">Secondary</div></div>
                         </div>
+
+<div class="poll fragment" style="bottom:-120px" data-fragment-index="4">
+    <h1>Warum wird auch standardmäßig vom Primary gelesen?</h1>
+            <ul>
+                    <li>Ist schneller</li>
+                    <li data-poll="correct">Aktuellere Daten</li>
+                    <li>Nur dort sind die Daten</li>
+                    <li>Einfach nur so</li>
+            </ul>
+    <h2>https://fraage.de</h2>
+</div>
+
                         <aside class="notes">Bei einer Master-Master- (oder Multi-Master-)Replikation dürfen mehrere Masterknoten existieren, auf die jeweils geschrieben werden darf und die sich gegenseitig synchronisieren. Da dadurch Inkonsistenzen und Konflikte entstehen können (Welches Write gewinnt?), ist ein gängiger Ansatz die Master-Slave-Replikation, so auch in MongoDB. In MongoDB wird der Master (PRIMARY) automatisch gewählt.</aside>
                 </section>
 
@@ -197,6 +209,18 @@ print(doc)​​</code></pre>
     <li><b><code>SECONDARY_PREFERRED</code></b></li>
     <li><b><code>NEAREST</code></b> (der Knoten mit kleinstem Ping)</li>
 </ul>
+
+<div class="poll fragment" style="bottom:-90px" data-fragment-index="4">
+    <h1>Bei welchen Read Preferences haben wir Eventual Consistency?</h1>
+            <ul>
+                    <li>SECONDARY</li>
+                    <li>SECONDARY, SECONDARY_PREFERRED</li>
+                    <li>Alle bis auf PRIMARY und PRIMARY_PREFERRED</li>
+                    <li data-poll="correct">Alle bis auf PRIMARY</li>
+            </ul>
+    <h2>https://fraage.de</h2>
+</div>
+
 <aside class="notes">Wenn sich Anwendungen mit MongoDB verbinden, gibt man alle Knoten mit an sowie eine Read-Preference. Der Treiber verbindet einen dann mit dem entsprechenden Knoten. <code>_PREFERRED</code> bedeutet, dass auch von Secondary bzw. Primary gelesen wird, sollte kein Primary bzw. Secondary verfügbar sein.</aside>
                 </section>
 
@@ -230,6 +254,17 @@ db = c.test​
 doc = db.personen.find_one({"name":"Franka"})​
 print(doc)​
 db.personen.insert_one({"name":"Timo"})​</code></pre>
+
+<div class="poll fragment" style="bottom:-320px" data-fragment-index="4">
+    <h1>Was ist der Nachteil von w=3 (bei 3 Knoten im Replika-Set)?</h1>
+            <ul>
+                 <li>Writes können verloren gehen</li>
+                    <li>Kann zu Konflikten führen</li>
+                    <li>Kann etwas länger dauern</li>
+                    <li data-poll="correct">Kann auch mal seeehr viel länger dauern</li>
+            </ul>
+    <h2>https://fraage.de</h2>
+</div>
 
                     <aside class="notes">Legt der Client ein Write-Concern fest, bekommt er sein ACK vom Primary erst, wenn seine Schreiboperation mindestens $w$ Rechner erreicht hat. Bei $w=1$ gibt es dass ACK, wenn der Primary das Schreiben lokal ausgeführt hat, $w=2$ wäre Primary plus irgendein Secondary. w=majority ist der Fall wenn mehr als die Hälfte der Rechner die Schreiboperation durchgeführt haben (bei 3 Knoten also 2). Sogar $w=0$ ist möglich. Dann bekommt der Client gar keine Bestätigung (höchstens mal eine Exception) vom Master. Er kann dann also gar nicht sicher sein, dass die Schreiboperation überhaupt ausgeführt wurde. Das Write-Concern kann für eine Operation (z. B. <code>insert</code>) oder eine Connection (also vom Client) festgelegt werden, aber auch für eine ganze Collection, sodass alle Clients standardmäßig ein gewissen Wert für $w$ haben. Der Wert kann auch global für ein komplettes ReplicaSet gesetzt werden. Der Standard ist $w=1$.​ Wichtig bei Replikation: Da in diesem Python-Beispiel ein Insert ausgeführt wird, muss der Knoten, mit dem sich hier verbunden wird, der Primary, also der Replication-Master sein.​</aside>
                 </section>
@@ -387,6 +422,18 @@ WriteResult({ "nInserted" : 1 })</code></pre>
     // ...                    
 }</code></pre>
 </div>
+
+<div class="poll fragment" style="bottom:-50px" data-fragment-index="4">
+    <h1>Was war nochmal eine Capped Collection?</h1>
+            <ul>
+                 <li data-poll="correct">Collection mit Maximalgröße</li>
+                    <li>Collection, in die nur geschrieben werden darf</li>
+                    <li>Collection, aus der nur gelesen werden darf</li>
+                    <li>Collection mit Untercollections</li>
+            </ul>
+    <h2>https://fraage.de</h2>
+</div>
+
     <aside class="notes">Die Insert-Operation taucht in der Oplog auf, jedoch ist dort auch der Wert des <code>_id</code>-Feldes angegeben, damit diese auf allen Knoten einheitlich ist und damit die Operation im Oplog idempotent ist. Idempotent heißt, es würde keinen Unterschied machen, ob man die Operation einfach oder mehrmals ausführt.</aside>
                 </section>
 
@@ -516,6 +563,15 @@ rs0:SECONDARY></code></pre>
                     <p class="small">(+) unterstützt Gleichheits- (=) und Bereichsanfragen (&lt;, &ge;, ...) auf dem Shard-Key</p>
                     <p class="small">(-) Bildung von Hotspots möglich</p>
                     
+                    <div class="poll fragment" style="bottom:-165px" data-fragment-index="4">
+                        <h1>Sharding ist ein Ansatz für ...?</h1>
+                                <ul>
+                                     <li data-poll="correct">Horizontale Skalierung</li>
+                                        <li>Vertikale Skalierung</li>
+                                </ul>
+                        <h2>https://fraage.de</h2>
+                    </div>
+
                     <aside class="notes">Bei der Partitionierung werden anders als bei der Replikation Daten nicht redundant gespeichert. Stattdessen wird der Datenbestand in Teile aufgeteilt und diese über die Cluster-Knoten verteilt gespeichert. In der dargestellten Grafik speichert jeder Knoten ein Drittel der Daten, Gleichverteilung vorausgesetzt. Ein Hotspot ist ein Wert oder ein Intervall von Werten, auf welches viel häufiger zugegriffen wird, als auf andere. Beispiel: Wenn Daten nach einem Zeitstempel partitioniert werden, greifen die meisten Anfragen auf aktuelle Datensätze mit hohen Timestamp-Werten zu als auf historische Daten.</aside>
                 </section>
 
@@ -822,6 +878,7 @@ databases:
 
                     <h4>Sharding</h4>
                     <ul class="small">
+                        <li>Horizontale Skalierung</li>
                         <li>Range-Partitioning vs. Hash-Partitioning</li>
                         <li><code>mongos</code> Sharding-Server, Shard-Server, Config-Server</li>
                         <li>Shard-Keys, Chunks</li>
