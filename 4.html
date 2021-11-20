@@ -374,8 +374,7 @@ WriteResult({ "nInserted" : 1 })</code></pre>
 
 <div class="fragment">
                     <h4>Oplog (Capped Collection): <code>oplog.rs</code> in DB <code>local</code></h4>
-                    <pre style="width: 100%;"><code class="javascript">rs0:PRIMARY> use local
-rs0:PRIMARY> db.oplog.rs.find()
+                    <pre style="width: 100%;"><code class="javascript">rs0:PRIMARY> db.getSiblingDB("local").oplog.rs.find()
 {
     "op" : "i",
     "ns" : "test.kunden",
@@ -432,7 +431,7 @@ rs0:PRIMARY> db.oplog.rs.find()
 
                     <div class="fragment" data-fragment-index="4">
                     <h4>Wahl eines neuen Masters</h4>
-                    <p style="margin-top: -3mm;" class="small"><b>Consenus</b>: &#8532;-Mehrheit an Stimmen erforderlich, um neuen Master zu bestimmen.​</p>
+                    <p style="margin-top: -1mm;" class="small"><b>Consenus</b>: &#8532;-Mehrheit an Stimmen erforderlich, um neuen Master zu bestimmen.​</p>
                     </div>
 
                     <div class="columns fragment small" data-fragment-index="5">
@@ -444,7 +443,9 @@ rs0:PRIMARY> db.oplog.rs.find()
                         <div><h1><i class="fas fa-server blue"></i></h1><div style="margin-top: -1cm;">Secondary</div></div>
                     </div>
 
-                    <aside class="notes">Wenn der Primary ausfällt, merken das die Secondaries daran, dass sie von ihm keinen Heartbeat mehr bekommen bzw. daran, dass Pings nicht beantwortet werden. Slaves können aber auch zu unrecht denken, dass der Master ausgefallen ist, z.B. wenn die Netzwerkverbindung zwischen Master und einem Slave unterbrochen wird. Deshalb besagt der Consensus-Algorithmus, dass mindestens zwei drittel der Rechner der Meinung sein müssen, dass sie einen neuen Master brauchen. Erst dann wird ein neuer Master bestimmt. Einer der Secondaries wird dann zum Primary, also zum neuen Master.​ Ist der ausgefallene Knoten wieder verfügbar, wird er selbst zum Secondary und bringt sich wieder mithilfe der Oplog des Masters auf den aktuellen Stand.</aside>
+                    <aside class="notes">Wenn der Primary ausfällt, merken das die Secondaries daran, dass sie von ihm keinen Heartbeat mehr bekommen bzw. daran, dass Pings nicht beantwortet werden. Slaves können aber auch zu unrecht denken, dass der Master ausgefallen ist, z.B. wenn die Netzwerkverbindung zwischen Master und einem Slave unterbrochen wird. Deshalb besagt der Consensus-Algorithmus, dass mindestens zwei drittel der Rechner der Meinung sein müssen, dass sie einen neuen Master brauchen. Erst dann wird ein neuer Master bestimmt. Einer der Secondaries wird dann zum Primary, also zum neuen Master.​ Ist der ausgefallene Knoten wieder verfügbar, wird er selbst zum Secondary und bringt sich wieder mithilfe der Oplog des Masters auf den aktuellen Stand.
+                        <br>&nbsp;
+                    </aside>
                     
                 </section>
 
@@ -460,10 +461,371 @@ rs.reconfig(cfg)</code></pre>
 
 <div class="fragment">
     <h4><code>rs.stepDown()</code></h4>
-    <p class="small" style="margin-top: -3mm;">Damit wird der Primary nun zum Secondary.</p>
+    <p class="small" style="margin-top: -3mm;"  >Damit wird der Primary nun zum Secondary.</p>
     <pre><code class="plaintext">rs0:PRIMARY> rs.stepDown()
 rs0:SECONDARY></code></pre>
 </div>
+                </section>
+
+                <section>
+                    <h3>Arbiter</h3>
+                    <p class="small">Ein Arbiter ist ein Mitglied im Replika-Set, das keine Daten speichert.<br>Der Arbiter nimmt aber an Abstimmungen teil.</p>
+                    <div class="columns" style="margin-top: -3mm; margin-bottom: -3mm;">
+                        <div><h1><i class="fas fa-server green"></i></h1><p class="small" style="margin-top: -10mm;"></p></div>
+                        <div><h1><i class="fas fa-server green"></i></h1><p class="small" style="margin-top: -10mm;"></p></div>
+                        <div><h1><i class="fas fa-server yellow"></i></h1><p class="small" style="margin-top: -10mm; text-align: center;">Arbiter</p></div>
+                    </div>
+                    <pre><code class="javascript">> rs.initiate( {
+    _id : "rs0",
+    members: [
+        { _id: 0, host: "localhost:27011" },
+        { _id: 1, host: "localhost:27012" },
+        { _id: 2, host: "localhost:27013", arbiterOnly: true }
+    ]
+})</code></pre>
+<aside class="notes">Um auch bei Replikationsfaktor 2 eine 2/3-Mehrheit zu bekommen, gibt es den Ansatz einen dritten Knoten den Replika-Set hinzuzufügen, der jedoch nur Arbiter ist. Dazu reicht in der Praxis ein Mailserver, Webserver, o. ä., der ohnehin läuft.</aside>
+                </section>
+
+                <section>
+                    <h3>Delayed Members</h3>
+                    <p class="small">Ein Secondary, der einen älteren Zustand der DB speichert.<br>
+                    &Rightarrow; Ein rollendes Backup. </p>
+                    <pre><code class="javascript">> rs.initiate( {
+    _id : "rs0",
+    members: [
+        { _id: 0, host: "localhost:27011" },
+        { _id: 1, host: "localhost:27012" },
+        { _id: 2, host: "localhost:27013", 
+          priority: 0, secondaryDelaySecs: 3600  }
+    ]
+})</code></pre>
+<p class="small">(+) Nach Anwenderfehler hat man eine Stunde Zeit, die Daten wiederherzustellen.</p>
+
+<aside class="notes">Delayed Replica-Set-Members müssen Priorität 0 haben, damit sie auf keinen Fall zum Primary gewählt werden. Sie holen sich aus der Oplog diejenigen Operationen bis zum Zeitpunkt <code>jetzt - secondaryDelaySecs</code>. In der hier gezeigten Konfiguration hat man also bei dem einen Knoten die Möglichkeit, stets auf den Zustand der Datenbank zuzugreifen, wie er vor einer Stunde war.</aside>
+                </section>
+
+                <section>
+                    <h3>Partitionierung / Sharding</h3>
+                    <p class="small" style="margin-top: -5mm;">Daten werden (gleichmäßig) verteilt auf den Knoten im Cluster gespeichert.</p>
+                    <h4>Bereichspartitionierung (Range-Partitioning)</h4>
+                    <div class="columns" style="margin-top: -3mm; margin-bottom: -3mm;">
+                        <div><h1><i class="fas fa-server yellow"></i></h1><p class="small" style="margin-top: -10mm;">_id &in; [-&infin;, 999]</p></div>
+                        <div><h1><i class="fas fa-server green"></i></h1><p class="small" style="margin-top: -10mm;">&nbsp;[1000, 1999]</p></div>
+                        <div><h1><i class="fas fa-server blue"></i></h1><p class="small" style="margin-top: -10mm;">&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;[2000, &infin;]</p></div>
+                    </div>
+                    <p class="small">(+) unterstützt Gleichheits- (=) und Bereichsanfragen (&lt;, &ge;, ...) auf dem Shard-Key</p>
+                    <p class="small">(-) Bildung von Hotspots möglich</p>
+                    
+                    <aside class="notes">Bei der Partitionierung werden anders als bei der Replikation Daten nicht redundant gespeichert. Stattdessen wird der Datenbestand in Teile aufgeteilt und diese über die Cluster-Knoten verteilt gespeichert. In der dargestellten Grafik speichert jeder Knoten ein Drittel der Daten, Gleichverteilung vorausgesetzt. Ein Hotspot ist ein Wert oder ein Intervall von Werten, auf welches viel häufiger zugegriffen wird, als auf andere. Beispiel: Wenn Daten nach einem Zeitstempel partitioniert werden, greifen die meisten Anfragen auf aktuelle Datensätze mit hohen Timestamp-Werten zu als auf historische Daten.</aside>
+                </section>
+
+                <section>
+                    <h3>Partitionierung / Sharding</h3>
+                    <p class="small" style="margin-top: -5mm;">Daten werden (gleichmäßig) verteilt auf den Knoten im Cluster gespeichert.</p>
+                    <h4>Hash-Partitionierung / Consistent Hashing</h4>
+                    <p class="small">$h(k) = \dots ~ mod ~ 2^{32}$</p>
+                    <div class="columns" style="margin-top: -3mm; margin-bottom: -3mm;">
+                        <div style="margin-left: -6cm;"><h1><i class="fas fa-server yellow"></i></h1><p class="small" style="margin-top: -10mm;">h(MAC_ADDR) = 858&thinsp;993&thinsp;459</p></div>
+                        <div style="margin-left: -11cm;"><h1><i class="fas fa-server green"></i></h1><p class="small" style="margin-top: -10mm;">&nbsp;2&thinsp;576&thinsp;980&thinsp;378</p></div>
+                        <div style="margin-left: -11cm;"><h1><i class="fas fa-server blue"></i></h1><p class="small" style="margin-top: -10mm;">&nbsp;3&thinsp;435&thinsp;973&thinsp;827</p></div>
+                    </div>
+                
+                <p class="small" style="width: 108%; font-size: 68%;">Datensatz mit Key $k$ auf dem Knoten speichern, dessen Hash am nächsten an $h(k)$ ist.</p>
+
+                <div class="poll fragment" style="bottom:-120px" data-fragment-index="4">
+                    <h1>Sei h(K) = k*(123^45) mod 2^32. Auf welchem Knoten wird der Datensatz mit ID 29 gespeichert?</h1>
+                            <ul>
+                                    <li>auf dem grünen</li>
+                                    <li>nirgendwo</li>
+                                    <li data-poll="correct">auf dem gelben</li>
+                                    <li>auf dem blauen</li>
+                            </ul>
+                    <h2>https://fraage.de</h2>
+                </div>
+
+                <aside class="notes">Ein primitiver Ansatz wäre, $h(k) = k ~ mod ~ N$ als Hash-Funktion zu wählen (N: Anzahl der Knoten im Cluster, hier: 3). Dies würde aber einen immensen Repartitionierungs-Aufwand verursachen, wenn ein Knoten dem Cluster hinzugefügt wird, weil dann die Hash-Funktion angepasst werden muss. Beim Consistent Hashing wird immer die gleiche Hash-Funktion verwendet, unabhängig von der Anzahl Cluster-Knoten. Mit der Hash-Funktion berechnet man den Knoten, auf welchem ein Datensatz gespeichert wird. Anders als bei der Bereichspartitionierung unterstützt Hash-Partitioning keine Bereichsanfragen (&lt;, &ge;, ...) auf dem Key.</aside>
+                </section>	
+
+
+                <section>
+                    <h3>Sharding in MongoDB</h3>
+                    <div class="small" style="margin-top: -30mm; position: absolute;">
+                    <div class="sl-block" data-block-type="text" data-name="text-1108bc" data-block-id="4d26b5dac860b768a92b7c7cd9207aa3" style="height: auto; width: 171px; left: 166px; top: 417.25px;">
+                        <div class="sl-block-content green" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 12; color:black; border-style: solid; border-width: 1px;">
+                            <p style="text-align: center;"><strong>shard1</strong></p>
+                    
+                            <p style="text-align: center;">mongod<br>
+                                mongod<br>
+                                mongod</p>
+                        </div>
+                    </div>
+                    <div class="sl-block" data-block-type="text" style="height: auto; width: 171px; left: 560.5px; top: 417.25px;" data-block-id="310a49d99a53b472f339fe77254ec419" data-name="text-f72f3c">
+                        <div class="sl-block-content green" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 12; color:black; border-style: solid; border-width: 1px;">
+                            <p style="text-align: center;"><strong>shard3</strong></p>
+                    
+                            <p style="text-align: center;">mongod<br>
+                                mongod<br>
+                                mongod</p>
+                        </div>
+                    </div>
+                    <div class="sl-block" data-block-type="text" style="height: auto; width: 171px; left: 362px; top: 417.25px;" data-block-id="4aaaaaf28152888535f12d5cf0e30f5b" data-name="text-57c659">
+                        <div class="sl-block-content green" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 12; color:black; border-style: solid; border-width: 1px;">
+                            <p style="text-align: center;"><strong>shard2</strong></p>
+                    
+                            <p style="text-align: center;">mongod<br>
+                                mongod<br>
+                                mongod</p>
+                        </div>
+                    </div>
+                    <div class="sl-block" data-block-type="text" style="height: auto; width: 279px; left: 308px; top: 251.25px;" data-block-id="708130f7350f41101b35da9b5ba11375" data-name="text-caa4f7">
+                        <div class="sl-block-content orange" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 13; border-style: solid; border-width: 1px; color:black;">
+                            <p style="text-align: center;"><strong>sharding server</strong></p>
+                    
+                            <p style="text-align: center;">mongos</p>
+                        </div>
+                    </div>
+                    <div class="sl-block" data-block-type="text" style="height: auto; width: 171px; left: 709px; top: 145.25px;" data-block-id="ef728ff96b2ba39167def19c4d53b6f3" data-name="text-137082">
+                        <div class="sl-block-content yellow" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 14; border-style: solid; border-width: 1px; color:black">
+                            <p style="text-align: center;"><strong>config servers</strong></p>
+                    
+                            <p style="text-align: center;">mongod<br>
+                                mongod<br>
+                                mongod</p>
+                        </div>
+                    </div>
+                    <div class="sl-block" data-block-type="text" data-name="text-0fcbe6" data-block-id="9c4b232363ff0491505e67c7dbdb4bba" style="height: auto; width: 283px; left: 308px; top: 116.75px;">
+                        <div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 15;">
+                            <p style="text-align: center;"><i class="fas fa-user blue"></i><br>
+                                Client</p>
+                        </div>
+                    </div>
+                    <div class="sl-block" data-block-type="line" data-name="line-7635fe" data-block-id="fd7114d2c049df3c6e2444021f46acaf" style="width: auto; height: auto; min-width: 0px; min-height: 0px; left: 240px; top: 350px;">
+                        <div class="sl-block-content" data-line-x1="85" data-line-y1="0" data-line-x2="0" data-line-y2="53" data-line-color="#000000" data-line-start-type="none" data-line-end-type="line-arrow" style="z-index: 16;" data-line-width="5px"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" preserveAspectRatio="xMidYMid" width="85" height="53" viewBox="0 0 85 53">
+                                <line stroke="rgba(0,0,0,0)" stroke-width="15" x1="85.5" y1="0.5" x2="3.6820950287781486" y2="51.51587015852657"></line>
+                                <line class="line-element" stroke="#000000" stroke-width="5" x1="85.5" y1="0.5" x2="3.6820950287781486" y2="51.51587015852657"></line>
+                                <path style="fill: rgba(0,0,0,0);" stroke="#000000" stroke-width="5" transform="translate(3.1820950287781486,51.01587015852657) rotate(238.055)" d="M 11.25 11.25 L 0 0 L -11.25 11.25"></path>
+                            </svg></div>
+                    </div>
+                    <div class="sl-block" data-block-type="line" style="width: auto; height: auto; min-width: 0px; min-height: 0px; left: 560.5px; top: 350px;" data-block-id="032051c865d20039a7c4bd276c6570fc" data-name="line-49889b">
+                        <div class="sl-block-content" data-line-x1="0" data-line-y1="0" data-line-x2="74.5" data-line-y2="53" data-line-color="#000000" data-line-start-type="none" data-line-end-type="line-arrow" style="z-index: 17;" data-line-width="5px"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" preserveAspectRatio="xMidYMid" width="74.5" height="53" viewBox="0 0 74.5 53">
+                                <line stroke="rgba(0,0,0,0)" stroke-width="15" x1="0.5" y1="0.5" x2="71.94434806011854" y2="51.32618049914473"></line>
+                                <line class="line-element" stroke="#000000" stroke-width="5" x1="0.5" y1="0.5" x2="71.94434806011854" y2="51.32618049914473"></line>
+                                <path style="fill: rgba(0,0,0,0);" stroke="#000000" stroke-width="5" transform="translate(71.44434806011854,50.82618049914473) rotate(125.428)" d="M 11.25 11.25 L 0 0 L -11.25 11.25"></path>
+                            </svg></div>
+                    </div>
+                    <div class="sl-block" data-block-type="line" style="width: auto; height: auto; min-width: 0px; min-height: 0px; left: 447.5px; top: 357.25px;" data-block-id="5f6653dc8dfea5abe44d96ff0ee7d960" data-name="line-4da322">
+                        <div class="sl-block-content" data-line-x1="0" data-line-y1="0" data-line-x2="0" data-line-y2="45.75" data-line-color="#000000" data-line-start-type="none" data-line-end-type="line-arrow" style="z-index: 18;" data-line-width="5px"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" preserveAspectRatio="xMidYMid" width="1" height="45.75" viewBox="0 0 1 45.75">
+                                <line stroke="rgba(0,0,0,0)" stroke-width="15" x1="0.5" y1="0.5" x2="0.5" y2="42.5"></line>
+                                <line class="line-element" stroke="#000000" stroke-width="5" x1="0.5" y1="0.5" x2="0.5" y2="42.5"></line>
+                                <path style="fill: rgba(0,0,0,0);" stroke="#000000" stroke-width="5" transform="translate(0,42) rotate(180)" d="M 11.25 11.25 L 0 0 L -11.25 11.25"></path>
+                            </svg></div>
+                    </div>
+                    <div class="sl-block" data-block-type="line" style="width: auto; height: auto; min-width: 0px; min-height: 0px; left: 597.75px; top: 241.75px;" data-block-id="53906a799ecb4c8f3111b67f577234a7" data-name="line-370422">
+                        <div class="sl-block-content" data-line-x1="0" data-line-y1="62.25" data-line-x2="103" data-line-y2="0" data-line-color="#000000" data-line-start-type="none" data-line-end-type="line-arrow" style="z-index: 19;" data-line-width="5px"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" preserveAspectRatio="xMidYMid" width="103" height="62.25" viewBox="0 0 103 62.25">
+                                <line stroke="rgba(0,0,0,0)" stroke-width="15" x1="0.5" y1="62.75" x2="100.29060407132171" y2="2.4396591899050812"></line>
+                                <line class="line-element" stroke="#000000" stroke-width="5" x1="0.5" y1="62.75" x2="100.29060407132171" y2="2.4396591899050812"></line>
+                                <path style="fill: rgba(0,0,0,0);" stroke="#000000" stroke-width="5" transform="translate(99.79060407132171,1.9396591899050812) rotate(58.853)" d="M 11.25 11.25 L 0 0 L -11.25 11.25"></path>
+                            </svg></div>
+                    </div>
+                    <div class="sl-block" data-block-type="line" style="width: auto; height: auto; min-width: 0px; min-height: 0px; left: 447.5px; top: 195.75px;" data-block-id="deabc136e4ade02ff1706d5c4a41c0a1" data-name="line-790f65">
+                        <div class="sl-block-content" data-line-x1="0" data-line-y1="0" data-line-x2="0" data-line-y2="45.75" data-line-color="#000000" data-line-start-type="none" data-line-end-type="line-arrow" style="z-index: 20;" data-line-width="5px"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" preserveAspectRatio="xMidYMid" width="1" height="45.75" viewBox="0 0 1 45.75">
+                                <line stroke="rgba(0,0,0,0)" stroke-width="15" x1="0.5" y1="0.5" x2="0.5" y2="42.5"></line>
+                                <line class="line-element" stroke="#000000" stroke-width="5" x1="0.5" y1="0.5" x2="0.5" y2="42.5"></line>
+                                <path style="fill: rgba(0,0,0,0);" stroke="#000000" stroke-width="5" transform="translate(0,42) rotate(180)" d="M 11.25 11.25 L 0 0 L -11.25 11.25"></path>
+                            </svg></div>
+                    </div>
+                    <div class="sl-block" data-block-type="line" style="width: auto; height: auto; min-width: 0px; min-height: 0px; left: 447.5px; top: 357.25px;" data-block-id="495a57c7f0824725b587d3677b339826" data-name="line-beb5dc">
+                        <div class="sl-block-content" data-line-x1="0" data-line-y1="0" data-line-x2="0" data-line-y2="45.75" data-line-color="#000000" data-line-start-type="none" data-line-end-type="line-arrow" style="z-index: 21;" data-line-width="5px"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" preserveAspectRatio="xMidYMid" width="1" height="45.75" viewBox="0 0 1 45.75">
+                                <line stroke="rgba(0,0,0,0)" stroke-width="15" x1="0.5" y1="0.5" x2="0.5" y2="42.5"></line>
+                                <line class="line-element" stroke="#000000" stroke-width="5" x1="0.5" y1="0.5" x2="0.5" y2="42.5"></line>
+                                <path style="fill: rgba(0,0,0,0);" stroke="#000000" stroke-width="5" transform="translate(0,42) rotate(180)" d="M 11.25 11.25 L 0 0 L -11.25 11.25"></path>
+                            </svg></div>
+                    </div>
+                    </div>
+
+                    <aside class="notes"><code>mongos</code> ist ein Prozess, der sich um das Sharding kümmert. Er speichert Informationen, zu welcher Collection welche Dokumente auf welchem "shard" gespeichert sind, auf den Config-Servern. Ein Client (und auch die MongoDB Shell) kann sich zu einem mongos-Prozess genau so verbinden und damit arbeiten wie mit einem <code>mongod</code>-Prozess.​ Sharding wird in Kombination mit Replikation eingesetzt.</aside>
+                </section>
+
+                <section>
+                    <h3>Sharding in MongoDB</h3>
+                    <h4><code style="background-color: #ffaa63;">mongos</code> - MongoDB Sharding-Server</h4>
+                    <p class="small" style="width: 105%; margin-top: -3mm;">Nimmt Client-Anfragen entgegen,<br>kommuniziert mit den Shard- und Config-Servern.</p>
+
+                    <h4><code style="background-color: rgba(66, 169, 170, 0.99);">mongod</code> - Shard-Server</h4>
+                    <p class="small" style="width: 105%; margin-top: -3mm;">Bilden jeweils einzelne Replika-Sets,<br>speichern die Daten.</p>
+
+                    <h4><code style="background-color: #ffcb63">mongod</code> - Config-Server</h4>
+                    <p class="small" style="width: 105%; margin-top: -3mm;">Bilden ebenfalls ein Replika-Set,<br>speichern Konfiguration und Metadaten (wo ist was gespeichert?).</p>
+                
+                    <aside class="notes">Die Daten in einem Sharded Cluster werden auf sogenannten Shards gespeichert. Dies sind ganz normale Replika-Sets aus <code>mongod</code>-Instanzen. Die Config-Server sind ebenfalls <code>mongod</code>-Instanzen, die ein eigenes Replika-Set bilden. <code>mongos</code> holt sich die Infos, was wo gespeichert ist, von den Config-Servern, um dann schließlich auf die Daten zuzugreifen, die der Client anfordert. Man kann beliebig viele <code>mongos</code> starten, die sich mit denselben Config-Servern verbinden. Sie sind also kein Single-Point-of-Failure.</aside>
+                </section>
+
+                <section>
+                    <h3>Sharding einrichten (1/3)</h3>
+                    <p class="small"><b>1. <code>mongod</code> auf den Shard- und Config-Servern starten</b> (hier: 12x auf localhost)</p>
+                    <pre style="width: 100%;"><code class="bash">mongod --replSet "s1" --shardsvr --port 27011 --dbpath /data/data11
+mongod --replSet "s1" --shardsvr --port 27012 --dbpath /data/data12
+mongod --replSet "s1" --shardsvr --port 27013 --dbpath /data/data13
+mongod --replSet "s2" --shardsvr --port 27021 --dbpath /data/data21
+mongod --replSet "s2" --shardsvr --port 27022 --dbpath /data/data22
+mongod --replSet "s2" --shardsvr --port 27023 --dbpath /data/data23
+mongod --replSet "s3" --shardsvr --port 27031 --dbpath /data/data31
+mongod --replSet "s3" --shardsvr --port 27032 --dbpath /data/data32
+mongod --replSet "s3" --shardsvr --port 27033 --dbpath /data/data33
+mongod --replSet "c" --configsvr --port 57041 --dbpath /data/config1
+mongod --replSet "c" --configsvr --port 57042 --dbpath /data/config2
+mongod --replSet "c" --configsvr --port 57043 --dbpath /data/config3</code></pre>
+
+<aside class="notes">Das auf den folgenden Folien gezeigte Beispiel soll verdeutlichen, welche Prozesse bei einem Sharded Cluster laufen. In der Praxis werden die hier gezeigten Kommandos automatisiert ausgeführt, über Config-Dateien konfiguriert und oft auch administrative Tools eingesetzt.<br>
+Wir starten hier 12 <code>mongod</code>-Prozesse: Pro Shard bilden jeweils 3 Instanzen ein Replika-Set, also ingesamt 9 Shard Server. Dazu kommen drei Config-Server, die ebenfalls ein Replika-Set bilden.</aside>
+
+</section>
+<section>
+    <h3>Sharding einrichten (2/3)</h3>
+                    <p class="small"><b>2. Pro Replika-Set Replikation initialisieren:</b></p>
+                    <pre><code class="javascript">> rs.initiate( {
+    _id : "s1",
+    members: [
+        { _id: 0, host: "localhost:27011" },
+        { _id: 1, host: "localhost:27012" },
+        { _id: 2, host: "localhost:27013" }
+    ]
+}) /* Das gleiche nochmal mit Replika-Set s2 und s3 */</code></pre>
+
+<pre><code class="javascript">> rs.initiate( {
+    _id : "c",
+    configsvr: true,
+    members: [
+        { _id: 0, host: "localhost:57041" },
+        { _id: 1, host: "localhost:57042" },
+        { _id: 2, host: "localhost:57043" }
+    ]
+})</code></pre>
+<aside class="notes">Die hier gezeigte Initialisierung der Replika-Sets muss für jeden der Shards erfolgen, sowie für die Config-Server. Dazu muss man sich mit jeweils einem beliebigen Knoten des Sets mit der Mongo Shell verbinden. Bei den Config-Servern wird <code>configsvr: true</code> angegeben.</aside>
+                </section>
+
+                <section>
+                    <h3>Sharding einrichten (3/3)</h3>
+                    <p class="small"><b>3. <code>mongos</code> starten (auf Standardport 27017):</b></p>
+                    <pre style="width: 100%;"><code class="bash">mongos --configdb c/localhost:57041,localhost:57042,localhost:57043</code></pre>
+
+                    <p class="small"><b>4. Sharding einrichten:</b></p>
+                    <pre style="width: 100%;"><code class="javascript">mongos> sh.addShard("s1/localhost:27011")
+mongos> sh.addShard("s2/localhost:27021")
+mongos> sh.addShard("s3/localhost:27031")</code></pre>    
+
+                    <aside class="notes"><code>mongos</code> läuft auf dem MongoDB-Standardport 27017, das heißt man kann sich nach dem Start wie gewohnt damit verbinden, z. B. mit der Mongo Shell, Compass oder einer anderen Anwendung. Um das Sharding einzurichten, verbindet man sich mit dem <code>mongos</code>-Server und fügt je Shard einen beliebigen Knoten mittels <code>sh.addShard</code> hinzu. Die übrigen Knoten der jeweiligen Replika-Sets holt sich MongoDB aus den entsprechenden Replika-Set-Konfigurationen. Die Einrichtung der Shards muss nur einmal gemacht werden, danach liegt die entsprechende Konfiguration auf den Config-Servern gespeichert.</aside>
+
+                </section>
+
+                <section>
+                    <h3><code>sh.status()</code></h3>
+                    <pre><code class="javascript" style="max-height: 30cm;">mongos> sh.status()
+--- Sharding Status --- 
+...
+shards:
+        {  "_id" : "s1",  "host" : "s1/localhost:27011,localhost:27012,localhost:27013",  "state" : 1,  "topologyTime" : Timestamp(1637397183, 2) }
+        {  "_id" : "s2",  "host" : "s2/localhost:27021,localhost:27022,localhost:27023",  "state" : 1,  "topologyTime" : Timestamp(1637397237, 1) }
+        {  "_id" : "s3",  "host" : "s3/localhost:27031,localhost:27032,localhost:27033",  "state" : 1,  "topologyTime" : Timestamp(1637397248, 1) }
+...
+databases:
+        {  "_id" : "config",  "primary" : "config",  "partitioned" : true }
+                config.system.sessions
+                        shard key: { "_id" : 1 }
+                        unique: false
+                        balancing: true
+                        chunks:</code></pre>
+
+                        <aside class="notes"><code>sh.status</code> zeigt, dass wir drei Shards haben und aus welchen Rechnern diese bestehen. Unter <code>databases</code> stehen diejenigen Datenbanken, in denen es geshardete Collections gibt (siehe nächste Folie). Standardmäßig ist nämlich eine Collection nicht geshardet. Alle Dokumente werden dann auf einem "primary" Shard gespeichert.</code></aside>
+                </section>
+
+                <section>
+                    <h3>Eine Collection sharden</h3>
+                    <p class="small">Voraussetzung: Index auf dem Shard-Key</p>
+                    <pre style="width: 100%;"><code class="javascript">mongos> db.produkte.createIndex({bezeichnung:1})​</code></pre>
+                    
+                    <pre class="fragment" style="width: 100%;"><code class="javascript">mongos> sh.enableSharding("test")
+mongos> sh.shardCollection("test.produkte", {bezeichnung:1})</code></pre>
+                        
+                    <pre class="fragment" style="width: 100%;"><code class="javascript">mongos> sh.status()
+...
+databases:
+{  "_id" : "test",  "partitioned" : true,  "primary" : "s1" }​
+    test.produkte
+            shard key: { "bezeichnung" : 1 }​
+            chunks:​
+                s1    2
+                s3    1​
+                s2    1​
+{ "bezeichnung" : { "$minKey" : 1 } } -->> { "bezeichnung" : "Cello" } on : s2​
+{ "bezeichnung" : "Cello" } -->> { "bezeichnung" : "Klavier" } on : s3
+{ "bezeichnung" : "Klavier" } -->> { "bezeichnung" : "Ukulele" } on : s1
+{ "bezeichnung" : "Ukulele" } -->> { "bezeichnung" : { "$maxKey" : 1 } } on : s1</code></pre>
+                            
+    <aside class="notes"><code>sh.status</code> zeigt nun, wo welche Dokumente gespeichert werden.</aside>
+                                                    
+                </section>
+
+                <section>
+                    <h3 style="font-size: 145%;">Gute Shard-Keys, schlechte Shard-Keys</h3>
+                    <pre style="width: 100%;"><code class="json">{  ​
+    "_id": ObjectId("564c7406b6b64b443b0f2d00"), // _id ist immer ok
+    "type": "temperature",​ // hat wahrscheinlich wenig versch. Werte
+    "longitude": "2.363471",  ​// sorgt für gute Gleichverteilung
+    "latitude": "48.917536",​  //   "    "   "          "
+    "city": "Nürnberg",​ // gut, wenn es viele Städte gibt
+    "time": ISODate("2015-11-27T10:25:39Z"),​  // schlecht ("Hotspot")
+    "value" : 5.8​,  // darauf sucht man wahrscheinlich nie
+    "unit": "Celsius"​,  // zu geringe Kardinalität
+    "visible_to": ["public","admin"]​  // verboten
+}​</code></pre>
+<aside class="notes">Der Shard-Key bestimmt, nach welchem Kriterium Dokumente auf den Shards verteilt werden. MongoDB bildet dann sogenannte Chunks, die einen Bereich von Werten beinhalten. Beispiel: Shard-Key "city". Der erste Chunk beinhaltet alles bis Köln, der zweite alles zwischen Köln und Regensburg, usw. Diese Chunks sind in etwa gleich groß, dafür sorgt ein Balancer. MongoDB verteilt die Chunks auf den einzelnen Shards. Ein guter Shard-Key hat keine zu geringe Kardinalität. Gibt es beispielsweise für "unit" nur die zwei Werte "Celsius" und "Fahrenheit", würden bei drei Shards auf einem gar nichts gespeichert werden. Und wenn fast alle Dokumente Celsius als Einheit haben, ist die Verteilung sehr ungerecht. Eine bessere Verteilung erreicht man mit Feldern, in denen es sehr viele verschiedene Werte gibt. Die _id ist als Shard-Key nie verkehrt. Aber eventuell eignen sich andere Felder besser. "city" könnte sinnvoll sein, wenn Anwendungen oft Anfragen mit einer Selektion auf diesem Feld stellen. "time" sollte als Shard-Key nicht verwendet werden, da die Zeitwerte monoton aufsteigen und somit sehr oft umpartitioniert werden muss.​</aside>
+                </section>
+
+                <section>
+                    <h3>Hash-Partitionierung in MongoDB</h3>
+                    <pre style="width: 100%;"><code class="javascript">mongos> db.produkte.createIndex({bezeichnung:"hashed"})​</code></pre>
+                    
+                    <pre style="width: 100%;"><code class="javascript">mongos> sh.shardCollection("test.produkte", {bezeichnung:"hashed"})</code></pre>
+
+                    <p class="small">MongoDB bildet nun Chunks über die Ergebnisse der Hash-Funktion.</p>
+
+                    <pre class="fragment" style="width: 100%;"><code class="javascript">mongos> sh.status()
+...
+databases:
+{  "_id" : "test",  "partitioned" : true,  "primary" : "s1" }​
+    test.produkte
+            shard key: { "bezeichnung" : "hashed" }​
+            chunks:​
+                s1    2
+                s3    1​
+                s2    1​
+{ "bezeichnung" : { "$minKey" : 1 } } 
+-->> { "bezeichnung" : "5534023222112865483" } on : s2​
+...</code></pre>
+
+<aside class="notes">Suchen wir nach einem Produkt mit Bezeichnung x und kommt bei h(x) ein Wert kleiner als 5534023222112865483 raus, wissen wir, dass wir auf Shard s2 nachschauen müssen.</aside>
+                </section>
+
+                <section>
+                    <h3>Zusammenfassung</h3>
+                    <h4>Replikation</h4>
+                    <ul class="small">
+                        <li>Replika-Sets: Primary, Secondary</li>
+                        <li><code>rs.secondaryOk()</code>, Read-Preference</li>
+                        <li>BASE, CAP-Theorem</li>
+                        <li>Write Concern, Strong Consistency, Eventual Consistency</li>
+                        <li>Oplog</li>
+                        <li>Automatischer Failover</li>
+                        <li>Arbiter, Delayed Members</li>              
+                    </ul>
+
+                    <h4>Sharding</h4>
+                    <ul class="small">
+                        <li>Range-Partitioning vs. Hash-Partitioning</li>
+                        <li><code>mongos</code> Sharding-Server, Shard-Server, Config-Server</li>
+                        <li>Shard-Keys, Chunks</li>
+                    </ul>
                 </section>
 			</div>
 		</div>
