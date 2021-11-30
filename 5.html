@@ -1,0 +1,577 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>NoSQL-Datenbanken - Kapitel 5 - Aggregation Pipeline</title>
+
+		<link rel="stylesheet" href="reveal.js/dist/reset.css">
+		<link rel="stylesheet" href="reveal.js/dist/reveal.css">
+
+        <link rel="stylesheet" href="src/slides.css">
+        <link rel="stylesheet" href="src/sql.css">
+
+		<link rel="stylesheet" href="src/layout.css">
+        <link rel="stylesheet" href="lib/joint.min.css" />
+        <link rel="stylesheet" href="src/erd.css" />
+        <link rel="stylesheet" href="src/poll.css" />
+
+		<!-- Theme used for syntax highlighting of code -->
+		<script>
+			if(window.location.search.match( /print-pdf/gi )) {
+				document.getElementsByTagName("head")[0].innerHTML += '<link rel="stylesheet" href="src/routeros.css">';
+			} else {
+				document.getElementsByTagName("head")[0].innerHTML += '<link rel="stylesheet" href="src/rainbow.css">';
+			}
+		</script>
+
+        <!--<script defer src="lib/fontawesome.all.min.js"/>-->
+        <link href="lib/fontawesome.all.min.css" rel="stylesheet">
+        <style> .reveal i.fa { font-family:FontAwesome; font-style: normal; } </style>
+	</head>
+	<body>
+		<div class="reveal">
+            <div id="header"></div>
+            <div id="footer"></div>
+			<div class="slides">
+                <section>
+                    <h4 style="text-align:center"><b>Prof. Dr.-Ing. Johannes Schildgen</b><br>
+                    <a href="mailto:johannes.schildgen@oth-regensburg.de">johannes.schildgen@oth-regensburg.de</a></h4>
+                    <h2>NoSQL-Datenbanken</h2>
+                    <h4 style="text-align:center">&nbsp;</h4>
+                    <h3>Kapitel 5: Aggregation Pipeline</h3>
+                    <h4 style="text-align:center">&nbsp;<br>&nbsp;</h4>
+                    <img src="img/ccby.png" height="60px" style="position: absolute; left:0px; border:0; bottom:-160px;">
+                    <img src="img/oth.png" height="60px" style="position: absolute; right:0px; border:0; bottom:-160px; box-shadow:none">
+                </section>
+
+                <section>
+                    <h3>MongoDB Aggregation Pipeline</h3>
+                    <div style="margin-top: -5cm; position: absolute;">
+                    <div class="sl-block" data-block-type="shape" style="width: 130px; height: 127px; left: 23px; top: 186px;" data-block-id="c773638492e44afe6b5b4c41ba4b0f4d" data-name="shape-a10fbe">
+                        <div class="sl-block-content" data-shape-type="arrow-right" data-shape-fill-color="rgb(68, 170, 171)" data-shape-stretch="true" style="z-index: 10;"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 130 127">
+                                <polygon points="0,38.1 65,38.1 65,0 130,63.5 65,127 65,88.89999999999999 0,88.89999999999999" class="shape-element" fill="rgb(0,0,0)"></polygon>
+                            </svg></div>
+                    </div>
+                    <div class="sl-block" data-block-type="shape" style="width: 130px; height: 127px; left: 411px; top: 186px;" data-block-id="31d5a9eb69a8d6b9784d44b79a96fdf6" data-name="shape-292ab2">
+                        <div class="sl-block-content" data-shape-type="arrow-right" data-shape-fill-color="rgb(68, 170, 171)" data-shape-stretch="true" style="z-index: 11;"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 130 127">
+                                <polygon points="0,38.1 65,38.1 65,0 130,63.5 65,127 65,88.89999999999999 0,88.89999999999999" class="shape-element" fill="rgb(130,130,130)"></polygon>
+                            </svg></div>
+                    </div>
+                    <div class="sl-block" data-block-type="shape" style="width: 130px; height: 127px; left: 281px; top: 186px;" data-block-id="3d57d5a7eb636244e788039b5b15f2fa" data-name="shape-5e3f85">
+                        <div class="sl-block-content" data-shape-type="arrow-right" data-shape-fill-color="rgb(68, 170, 171)" data-shape-stretch="true" style="z-index: 12;"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 130 127">
+                                <polygon points="0,38.1 65,38.1 65,0 130,63.5 65,127 65,88.89999999999999 0,88.89999999999999" class="shape-element orange"></polygon>
+                            </svg></div>
+                    </div>
+                    <div class="sl-block" data-block-type="shape" style="width: 130px; height: 127px; left: 153px; top: 186px;" data-block-id="da80eba25d0a5d73297cd60a653c7926" data-name="shape-9cd52e">
+                        <div class="sl-block-content" data-shape-type="arrow-right" data-shape-fill-color="rgb(68, 170, 171)" data-shape-stretch="true" style="z-index: 13;"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 130 127">
+                                <polygon points="0,38.1 65,38.1 65,0 130,63.5 65,127 65,88.89999999999999 0,88.89999999999999" class="shape-element blue"></polygon>
+                            </svg></div>
+                    </div>
+                    <div class="sl-block" data-block-type="text" data-name="text-7039c8" data-block-id="9ed9834b3a324c16f9a27a1cf1a177c0" style="height: auto; width: 118px; left: 18px; top: 234px;">
+                        <div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 14; font-size: 80%; color: rgb(255, 255, 255);">
+                            <p class="small" style="text-align: center;">$match</p>
+                        </div>
+                    </div>
+                    <div class="sl-block" data-block-type="text" style="height: auto; width: 118px; left: 150px; top: 234px;" data-block-id="504382a757b42bd12ac341f789652ef9" data-name="text-60a9f5">
+                        <div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 15; font-size: 80%; color: rgb(255, 255, 255);">
+                            <p class="small" style="text-align: center;">$unwind</p>
+                        </div>
+                    </div>
+                    <div class="sl-block" data-block-type="text" style="height: auto; width: 118px; left: 279px; top: 234px;" data-block-id="5b0d2d600aceb1792b7c08bb7ca04a9a" data-name="text-773d26">
+                        <div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 16; font-size: 80%; color: rgb(255, 255, 255);">
+                            <p class="small" style="text-align: center; color: black;">$group</p>
+                        </div>
+                    </div>
+                    <div class="sl-block" data-block-type="text" style="height: auto; width: 118px; left: 411px; top: 234px;" data-block-id="0485158cdb07e889acc155861bf87b09" data-name="text-f2eaa4">
+                        <div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 17; font-size: 80%; color: rgb(255, 255, 255);">
+                            <p class="small" style="text-align: center;">$sort</p>
+                        </div>
+                    </div>
+                    <div class="sl-block" data-block-type="shape" style="width: 130px; height: 127px; left: 541px; top: 186px;" data-block-id="d99ee98fcdd2306261f5be94a955da68" data-name="shape-e5aa63">
+                        <div class="sl-block-content" data-shape-type="arrow-right" data-shape-fill-color="rgb(68, 170, 171)" data-shape-stretch="true" style="z-index: 18;"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 130 127">
+                                <polygon points="0,38.1 65,38.1 65,0 130,63.5 65,127 65,88.89999999999999 0,88.89999999999999" class="shape-element red"></polygon>
+                            </svg></div>
+                    </div>
+                    <div class="sl-block" data-block-type="text" style="height: auto; width: 118px; left: 541px; top: 234px;" data-block-id="5a73e5cb03deaf8abdc312d2c2316eda" data-name="text-c964a1">
+                        <div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 19; font-size: 80%; color: rgb(255, 255, 255);">
+                            <p class="small" style="text-align: center; color: black;">$limit</p>
+                        </div>
+                    </div>
+                    <div class="sl-block" data-block-type="shape" style="width: 130px; height: 127px; left: 677px; top: 186px;" data-block-id="8c2b4924b7c678ab75b57ab137a4bc71" data-name="shape-5d4e1d">
+                        <div class="sl-block-content" data-shape-type="arrow-right" data-shape-fill-color="rgb(68, 170, 171)" data-shape-stretch="true" style="z-index: 20;"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 130 127">
+                                <polygon points="0,38.1 65,38.1 65,0 130,63.5 65,127 65,88.89999999999999 0,88.89999999999999" class="shape-element yellow"></polygon>
+                            </svg></div>
+                    </div>
+                    <div class="sl-block" data-block-type="text" style="height: auto; width: 118px; left: 677px; top: 234px;" data-block-id="c856295819db567831a5568bfa5b6510" data-name="text-716f7b">
+                        <div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 21; font-size: 80%; color: rgb(255, 255, 255);">
+                            <p class="small" style="text-align: center; color: black;">$skip</p>
+                        </div>
+                    </div>
+                    <div class="sl-block" data-block-type="shape" style="width: 130px; height: 127px; left: 812px; top: 186px;" data-block-id="13c1fad8a44d5176ae84955d287a3486" data-name="shape-8ec1ea">
+                        <div class="sl-block-content" data-shape-type="arrow-right" data-shape-fill-color="rgb(68, 170, 171)" data-shape-stretch="true" style="z-index: 22;"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 130 127">
+                                <polygon points="0,38.1 65,38.1 65,0 130,63.5 65,127 65,88.89999999999999 0,88.89999999999999" class="shape-element green"></polygon>
+                            </svg></div>
+                    </div>
+                    <div class="sl-block" data-block-type="text" style="height: auto; width: 118px; left: 812px; top: 234px;" data-block-id="783fcdf908addd05160487a564e47c59" data-name="text-e91102">
+                        <div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 23; font-size: 80%; color: rgb(255, 255, 255);">
+                            <p class="small" style="text-align: center;">$project</p>
+                        </div>
+                    </div>
+                    </div>
+
+                    <p style="margin-top: 5cm;" class="small">
+                        <code>db.personen.find(<b>{ name:/^F/ }</b>,<span class="green"><b>{ name:1, _id:0 }</b></span> )<br>
+                            <span class="gray"><b>.sort({ geboren:1 })</b></span><span class="red"><b>.limit(2)</b></span><span class="yellow"><b>.skip(1)</b></span></code>
+                    </p>
+
+                    <p class="small">
+                        <code>db.personen.aggregate([<br>
+                            &nbsp;<b>{$match: { name:/^F/ }}</b>,<br>
+                            &nbsp;<span class="gray"><b>{$sort: { geboren:1 }}</b></span>,<br>
+                            &nbsp;<span class="red"><b>{$limit: 2}</b></span>, <span class="yellow"><b>{$skip: 1}</b></span>,<br>
+                            &nbsp;<span class="green"><b>{$project: { name:1, _id:0 }}</b></span> ])</code>
+                    </p>
+
+                    <aside class="notes">Die Aggregation Pipeline bietet mehr Möglichkeiten, Analyseanfragen zu stellen als lediglich mit den bisher kennengelernten Operatoren find, sort, limit, skip und count. <code>collection.aggregate</code> nimmt einen Array mit Pipeline-Schritten entgegen, die nacheinander ausgeführt werden sollen.</aside>
+
+                </section>
+
+                <section>
+                    <h3><code>$match</code>-Schritt</h3>
+                    <div class="sl-block" data-block-type="shape" style="width: 130px; height: 127px; left: 776px; top: 83px;" data-name="shape-a10fbe" data-block-id="92f0f792a88f5f22ae2e71fbc0e7ad66">
+                        <div class="sl-block-content" data-shape-type="arrow-right" data-shape-fill-color="rgb(68, 170, 171)" data-shape-stretch="true" style="z-index: 10;"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 130 127">
+                                <polygon points="0,38.1 65,38.1 65,0 130,63.5 65,127 65,88.89999999999999 0,88.89999999999999" class="shape-element" fill="rgb(0, 0, 0)"></polygon>
+                            </svg></div>
+                    </div>
+                    <div class="sl-block" data-block-type="text" data-name="text-7039c8" style="height: auto; width: 118px; left: 771px; top: 131px;" data-block-id="6222be3193af896596eef23149256445">
+                        <div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 11; font-size: 80%; color: rgb(255, 255, 255);">
+                            <p class="small" style="text-align: center;">$match</p>
+                        </div>
+                    </div>
+
+                    <pre style="width:16cm; margin-left: 5mm;"><code class="javascript">db.personen.aggregate([
+ {$match: {"name": /^F/}}
+])</code></pre>
+
+<aside class="notes">Die Reihenfolge der Schritte ist relevant. Der <code>$match</code>-Schritt führt eine Selektion aus. Alle Dokumente aus der Collection, die das <code>$match</code>-Kriterium erfüllen, kommen einen Schritt weiter. Da es in der Anfrage dieser Folie keine weiteren Schritte gibt, sind im Ergebnis der Anfrage diejenigen Personen, deren Name mit F beginnt.</aside>
+                </section>
+
+                <section>
+                    <h3><code>$sort</code>-Schritt</h3>
+                    <div class="sl-block" data-block-type="shape" style="width: 130px; height: 127px; left: 776px; top: 83px;" data-name="shape-a10fbe" data-block-id="92f0f792a88f5f22ae2e71fbc0e7ad66">
+                        <div class="sl-block-content" data-shape-type="arrow-right" data-shape-fill-color="rgb(68, 170, 171)" data-shape-stretch="true" style="z-index: 10;"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 130 127">
+                                <polygon points="0,38.1 65,38.1 65,0 130,63.5 65,127 65,88.89999999999999 0,88.89999999999999" class="shape-element" fill="rgb(130, 130, 130)"></polygon>
+                            </svg></div>
+                    </div>
+                    <div class="sl-block" data-block-type="text" data-name="text-7039c8" style="height: auto; width: 118px; left: 771px; top: 131px;" data-block-id="6222be3193af896596eef23149256445">
+                        <div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 11; font-size: 80%; color: rgb(255, 255, 255);">
+                            <p class="small" style="text-align: center;">$sort</p>
+                        </div>
+                    </div>
+
+                    <pre style="width:16cm; margin-left: 5mm;"><code class="javascript">db.personen.aggregate([
+ {$match: {"name": /^F/}},
+ {$sort: {"geboren": 1}}
+])</code></pre>
+
+<aside class="notes">Im <code>$sort</code>-Schritt wird festgelegt, nach welchen Feldern aufsteigend (1) oder absteigend (-1) sortiert werden soll.<br>
+Die im vorherigen Schritt gefilterte Menge an Dokumenten wird nun also nach dem Feld "geboren" aufsteigend sortiert. Theoretisch könnte das Sortieren auch vor dem <code>$match</code>-Schritt erfolgen und würde zum gleichen Ergebnis führen.</aside>
+                </section>
+
+                <section>
+                    <h3><code>$limit</code> und <code>$skip</code></h3>
+                    <div class="sl-block" data-block-type="shape" style="width: 130px; height: 127px; left: 776px; top: 83px;" data-name="shape-a10fbe" data-block-id="855bff4216c3fefd68460e0d9941a007">
+                        <div class="sl-block-content" data-shape-type="arrow-right" data-shape-fill-color="rgb(68, 170, 171)" data-shape-stretch="true" style="z-index: 10;"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 130 127">
+                                <polygon points="0,38.1 65,38.1 65,0 130,63.5 65,127 65,88.89999999999999 0,88.89999999999999" class="shape-element yellow"></polygon>
+                            </svg></div>
+                    </div>
+                    <div class="sl-block" data-block-type="text" data-name="text-7039c8" style="height: auto; width: 118px; left: 771px; top: 131px;" data-block-id="b02dc51b1be93c0feedccbe3ab9bf9a0">
+                        <div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 11; font-size: 80%; color: rgb(255, 255, 255);">
+                            <p class="small" style="text-align: center; color: black;">$skip</p>
+                        </div>
+                    </div>
+                    <div class="sl-block" data-block-type="shape" style="width: 130px; height: 127px; left: 646px; top: 83px;" data-block-id="5098ece9652a174c3ddb1e64dd436fdc" data-name="shape-4566fc">
+                        <div class="sl-block-content" data-shape-type="arrow-right" data-shape-fill-color="rgb(68, 170, 171)" data-shape-stretch="true" style="z-index: 12;"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 130 127">
+                                <polygon points="0,38.1 65,38.1 65,0 130,63.5 65,127 65,88.89999999999999 0,88.89999999999999" class="shape-element red"></polygon>
+                            </svg></div>
+                    </div>
+                    <div class="sl-block" data-block-type="text" style="height: auto; width: 118px; left: 641px; top: 131px;" data-block-id="be35c33b9ae3c6688141afa7810ec38f" data-name="text-8df003">
+                        <div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 13; font-size: 80%; color: rgb(255, 255, 255);">
+                            <p class="small" style="text-align: center; color:black;">$limit</p>
+                        </div>
+                    </div>
+
+                    <pre style="width:16cm; margin-left: 5mm;"><code class="javascript">db.personen.aggregate([
+ {$match: {"name": /^F/}},
+ {$sort: {"geboren": 1}},
+ {$limit: 2},
+ {$skip: 1}
+])</code></pre>
+
+<aside class="notes">Nach dem Sortieren sollen nur zwei Dokumente ausgegeben werden. Ohne <code>$skip</code>-Schritt wären das die ersten beiden Dokumente, aber hier wird das erste übersprungen. Es kommt also die zweitälteste und drittälteste Person heraus, deren Name mit F beginnt.</aside>
+                </section>
+
+                <section>
+                    <h3><code>$project</code>-Schritt</h3>
+                    <div class="sl-block" data-block-type="shape" style="width: 130px; height: 127px; left: 776px; top: 83px;" data-name="shape-a10fbe" data-block-id="92f0f792a88f5f22ae2e71fbc0e7ad66">
+                        <div class="sl-block-content" data-shape-type="arrow-right" data-shape-fill-color="rgb(68, 170, 171)" data-shape-stretch="true" style="z-index: 10;"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 130 127">
+                                <polygon points="0,38.1 65,38.1 65,0 130,63.5 65,127 65,88.89999999999999 0,88.89999999999999" class="shape-element green"></polygon>
+                            </svg></div>
+                    </div>
+                    <div class="sl-block" data-block-type="text" data-name="text-7039c8" style="height: auto; width: 118px; left: 771px; top: 131px;" data-block-id="6222be3193af896596eef23149256445">
+                        <div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 11; font-size: 80%; color: rgb(255, 255, 255);">
+                            <p class="small" style="text-align: center;">$project</p>
+                        </div>
+                    </div>
+
+                    <pre style="width:16cm; margin-left: 5mm;"><code class="javascript">db.personen.aggregate([
+ {$match: {"name": /^F/}},
+ {$sort: {"geboren": 1}},
+ {$limit: 2},
+ {$skip: 1},
+ {$project: {"name":1, "_id":0}}
+])</code></pre>
+
+<div class="poll fragment fade-in-then-out" style="bottom:-280px">
+    <h1>Welche alternative Reihenfolge würde zum gleichen Ergebnis führen?</h1>
+            <ul>
+                 <li>project, sort, limit, skip, match</li>
+                 <li>match, project, sort, limit, skip</li>
+                 <li data-poll="correct">match, sort, skip, limit, project</li>
+                 <li>sort, skip, limit, project, match</li>
+            </ul>
+    <h2>https://fraage.de</h2>
+</div>
+
+<pre class="fragment" style="width:16cm; margin-left: 5mm;"><code class="javascript">db.personen.aggregate([
+ {$project: {"vorname":"$name", "_id":0}}
+])</code></pre>
+
+<aside class="notes">Zum Abschluss soll noch ein <code>$project</code>-Schritt erfolgen. Ohne diesen kämen die vollständigen Dokumente so heraus, wie sie auch in der Collection gespeichert sind. Wollen wir nur die Namen der beiden Personen haben, brauchen wir diesen Schritt. Wichtig ist, dass der Schritt erst nach dem <code>$sort</code>-Schritt erfolgt, da <code>$sort</code> sonst keinen Zugriff auf das Feld <code>"geboren"</code> hätte.
+<br>Im <code>$projekt</code>-Schritt können auch neue Felder eingeführt werden. Das erfolgt immer dann, wenn als Wert weder 0 noch 1 angegeben wird. Hier kommt ein neues Feld "person" hinzu. Es hat als Wert das, was im Feld "name" stand. Mehr zum <code>$</code>-Operator später beim <code>$group</code>-Schritt. Hier wurde also das Feld "name" in "vorname" umbenannt. Quasi ein <code>SELECT name AS vorname FROM personen;</code>    
+    </aside>
+                </section>
+
+                <section>
+                    <h3><code>$group</code>-Schritt</h3>
+                    <div class="sl-block" data-block-type="shape" style="width: 130px; height: 127px; left: 776px; top: 83px;" data-name="shape-a10fbe" data-block-id="92f0f792a88f5f22ae2e71fbc0e7ad66">
+                        <div class="sl-block-content" data-shape-type="arrow-right" data-shape-fill-color="rgb(68, 170, 171)" data-shape-stretch="true" style="z-index: 10;"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 130 127">
+                                <polygon points="0,38.1 65,38.1 65,0 130,63.5 65,127 65,88.89999999999999 0,88.89999999999999" class="shape-element orange"></polygon>
+                            </svg></div>
+                    </div>
+                    <div class="sl-block" data-block-type="text" data-name="text-7039c8" style="height: auto; width: 118px; left: 771px; top: 131px;" data-block-id="6222be3193af896596eef23149256445">
+                        <div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 11; font-size: 80%; color: rgb(255, 255, 255);">
+                            <p class="small" style="text-align: center; color: black;">$group</p>
+                        </div>
+                    </div>
+
+                    <p class="small"><code>{ $group : {<br>
+&nbsp;_id : &lt;ausdruck&gt;,<br>
+&nbsp;&lt;neuesFeld&gt; : {&lt;akkumulator&gt;:&lt;ausdruck&gt;}<br>
+&nbsp;...<br>
+}}</code></p>
+
+<ul class="small">
+    <li><code>&lt;ausdruck&gt;</code>: Zugriff auf Feldwerte möglich, z. B. <code>"$wohnort"</code></li>
+    <li><code>&lt;akkumulator&gt;</code>: <code>$sum</code>, <code>$avg</code>, <code>$first</code>, <code>$last</code>, <code>$max</code>, <code>$min</code>, <code>$push</code>, ...</li>
+</ul>
+
+                    <pre style="width:16cm; margin-left: 5mm;"><code class="javascript">db.personen.aggregate([
+ { $group: {"_id": "$wohnort",
+            "geh_sum":{"$sum":"$gehalt"}}
+ }
+])</code></pre>
+
+<aside class="notes">Die _id beinhaltet das Feld nach dem gruppiert wird. Mittels des Dollarzeichens kann auf den Wert eines Attributs zugegriffen werden. Im Group-Schritt können neue Felder angelegt werden, die dann aber jeweils einen Akkumulator, also eine Aggregatfunktion enthalten müssen. Das Beispiel auf dieser Folie gibt die Summe von Gehältern pro Ort aus. Siehe nächste Folie.</aside>
+                </section>
+
+                <section>
+                    <h3><code>$group</code>-Schritt</h3>
+
+                    <p class="small" style="width: 30cm;"><code>{ _id: 1, name: "Heinz", wohnort:"Ulm", gehalt:50000 }<br>
+{ _id: 2, name: "Laura", wohnort:"München", gehalt:45000 }<br>
+{ _id: 3, name: "Georg", wohnort:"München", gehalt:40000 }</code></p>
+
+<pre style="width:16cm; margin-left: 5mm;"><code class="javascript">db.personen.aggregate([
+ { $group: {"_id": "$wohnort",
+            "geh_sum":{"$sum":"$gehalt"}}
+ }
+])</code></pre>
+
+<div class="poll fragment" style="bottom:-160px">
+    <h1>Wie sieht ein Ergebnis-Dokument aus?</h1>
+            <ul>
+                 <li>{ "wohnort": "München", geh_sum:85000 }</li>
+                 <li>{ "_id": 0, "wohnort": "München", geh_sum:85000 }</li>
+                 <li>{ _id: {"wohnort": "München"}, geh_sum:85000 }</li>
+                 <li data-poll="correct">{ _id: "München", geh_sum:85000 }</li>
+            </ul>
+    <h2>https://fraage.de</h2>
+</div>
+
+<p class="fragment small">Ergebnis:<br>
+<code>{ "_id": "Ulm", "geh_sum":50000 }<br>
+{ "_id": "München", "geh_sum":85000 }</code></p>
+
+<aside class="notes">Man kann im <code>$group</code>-Schritt schon erkennen, wie die Ausgabe-Dokumente aussehen werden. Sie haben ein Feld <code>_id</code>, in dem das steht, wonach gruppiert wurde (hier ist das der Wohnort) und ein Feld <code>geh_sum</code>, in der die Gehaltsumme steht. Äquivalent dazu in SQL: <code>SELECT wohnort AS _id, SUM(gehalt) AS geh_sum FROM personen GROUP BY wohnort</code></aside>
+                </section>
+
+                <section>
+                    <h3>Zählen mit <code>$sum</code></h3>
+                    <p class="small" style="width: 30cm;"><code>{ _id: 1, name: "Heinz", wohnort:"Ulm", gehalt:50000 }<br>
+                        { _id: 2, name: "Laura", wohnort:"München", gehalt:45000 }<br>
+                        { _id: 3, name: "Georg", wohnort:"München", gehalt:40000 }</code></p>
+
+<pre style="width:16cm; margin-left: 5mm;"><code class="javascript">db.personen.aggregate([
+ { $group: {"_id": "$wohnort",
+            "einwohner":{"$sum":1}}
+ }
+])</code></pre>
+
+            <p class="fragment small">Ergebnis:<br>
+            <code>{ "_id": "Ulm", "einwohner":1 }<br>
+            { "_id": "München", "einwohner":2 }</code></p>
+
+
+            <aside class="notes">Es gibt keinen Count-Akkumulator. Wenn man zählen will, summiert man einfach Einsen auf.</aside>
+                </section>
+
+                <section>
+                    <h3>Akkumulatoren</h3>
+                    <div class="columns">
+                        <div>
+                    <pre style="width: 15cm;"><code class="javascript">db.personen.aggregate([
+ { $sort: {"gehalt":-1} },
+ { $group: { "_id": "$wohnort",
+        "einwohner":{$sum:1},
+        "avg_gehalt":{$avg:"$gehalt"},
+        "min_gehalt":{$min:"$gehalt"},
+        "max_gehalt":{$max:"$gehalt"},
+        "reichster":{$first:"$name"},
+        "aermster":{$last:"$name"},
+        "name_array":{$push:"$name"},
+        "name_menge":{$addToSet:"$name"}
+        }
+ }
+])</code></pre></div>
+
+<div>
+    <pre class="fragment" style="width: 9cm;"><code class="javascript" style="max-height: 40cm;">{
+ "_id" : "München",
+ "einwohner" : 3,
+ "avg_gehalt" : 43000,
+ "min_gehalt" : 40000,
+ "max_gehalt" : 45000,
+ "reichster" : "Laura",
+ "aermster" : "Georg",
+ "name_array" : [
+        "Laura",
+        "Georg",
+        "Georg"
+ ],
+ "name_menge" : [
+        "Georg",
+        "Laura"
+ ]
+}</code></pre>
+</div>
+
+</div>
+<div class="poll fragment" style="bottom:-80px">
+    <h1>Auf welchen Akkumulator hat der $sort-Schritt keine Auswirkung?</h1>
+            <ul>
+                 <li>$first</li>
+                 <li>$last</li>
+                 <li>$push</li>
+                 <li data-poll="correct">$addToSet</li>
+            </ul>
+    <h2>https://fraage.de</h2>
+</div>
+<aside class="notes">Man kann mehrere Akkumulatoren in einem <code>$group</code> verwenden. Bei <code>$first</code> und <code>$last</code> muss vorher sortiert werden. In diesem Beispiel wurde absteigend nach Gehalt sortiert. Für die anderen Akkumulatoren (außer <code>$push</code>) hat das Sortieren keine Auswirkung. Wir haben noch eine vierte Person eingefügt, die ebenfalls Georg heißt, um zu veranschaulichen, dass der $addToSet-Akkumulator Duplikate entfernt.</aside>
+                </section>
+
+                <section>
+                    <h3>Gruppieren nach mehreren Feldern</h3>
+
+                    <p class="small" style="width: 30cm;"><code>{ _id: 1, name: "Heinz", wohnort:"Ulm", gehalt:50000 }<br>
+                        { _id: 2, name: "Laura", wohnort:"München", gehalt:45000 }<br>
+                        { _id: 3, name: "Georg", wohnort:"München", gehalt:40000 }<br>
+                        { _id: 4, name: "Georg", wohnort:"München", gehalt:44000 }</code></p>
+
+<pre style="width:16cm; margin-left: 5mm;"><code class="javascript">db.personen.aggregate([
+ { $group: {"_id": {"name":"$name",
+                    "wohnort":"$wohnort"},
+          "anzahl":{$sum:1}}
+ }
+])</code></pre>
+
+            <p class="fragment small" style="width: 40cm;">Ergebnis:<br>
+            <code>{ "_id":{"name":"Heinz", "wohnort":"Ulm"}, "anzahl":1}<br>
+{ "_id":{"name":"Laura", "wohnort":"München"}, "anzahl":1}<br>
+{ "_id":{"name":"Georg", "wohnort":"München"}, "anzahl":2}</code></p>
+                    
+<aside class="notes">Es kann nach mehreren Feldern gruppiert werden, indem als <code>_id</code> ein Dokument aus mehreren Feldern festgelegt wird.​</aside>
+                </section>
+
+                <section>
+                    <h3>Gruppieren nach dem Gruppieren</h3>
+
+                    <pre style="width:16cm; margin-left: 5mm;"><code class="javascript">db.personen.aggregate([
+ { $group: {"_id": {"name":"$name",
+                   "wohnort":"$wohnort"},
+            "anzahl":{$sum:1}}
+ },
+ { $group: {"_id": "$_id.wohnort",
+            "avg_anzahl":{$avg:"$anzahl"}} }
+])</code></pre>
+
+                    <p class="small" style="width: 30cm;">Zwischenergebnis nach dem ersten <code>$group</code>:<br><code>{ "_id":{"name":"Heinz", "wohnort":"Ulm"}, "anzahl":1}<br>
+                        { "_id":{"name":"Laura", "wohnort":"München"}, "anzahl":1}<br>
+                        { "_id":{"name":"Georg", "wohnort":"München"}, "anzahl":2}</code></p>
+
+            <p class="fragment small" style="width: 40cm;">Endergebnis:<br>
+            <code>{ "_id" : "München", "avg_anzahl" : 1.5 }<br>
+{ "_id" : "Ulm", "avg_anzahl" : 1 }</code></p>
+                    
+<aside class="notes">Indem ein weiterer <code>$group</code>-Schritt angefügt wird, können wir berechnen, wie oft in jedem Ort ein Name durchschnittlich vorkommt.​</aside>
+                </section>
+
+                <section>
+                    <h3><code>$unwind</code>-Schritt</h3>
+                    <div class="sl-block" data-block-type="shape" style="width: 130px; height: 127px; left: 776px; top: 248px;" data-name="shape-a10fbe" data-block-id="92f0f792a88f5f22ae2e71fbc0e7ad66">
+                        <div class="sl-block-content" data-shape-type="arrow-right" data-shape-fill-color="rgb(68, 170, 171)" data-shape-stretch="true" style="z-index: 10;"><svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="100%" height="100%" preserveAspectRatio="none" viewBox="0 0 130 127">
+                                <polygon points="0,38.1 65,38.1 65,0 130,63.5 65,127 65,88.89999999999999 0,88.89999999999999" class="shape-element blue"></polygon>
+                            </svg></div>
+                    </div>
+                    <div class="sl-block" data-block-type="text" data-name="text-7039c8" style="height: auto; width: 118px; left: 771px; top: 296px;" data-block-id="6222be3193af896596eef23149256445">
+                        <div class="sl-block-content" data-placeholder-tag="p" data-placeholder-text="Text" style="z-index: 11; font-size: 80%; color: rgb(255, 255, 255);">
+                            <p class="small" style="text-align: center;">$unwind</p>
+                        </div>
+                    </div>
+
+                    <p class="small" style="width: 40cm;"><code>
+                        { "_id":1, "name":"Franka", "hobbies":["Yoga", "Geige"] }<br>
+                        { "_id":2, "name":"Ulrike", "hobbies":["Klettern","Yoga"]}<br>
+                        { "_id":3, "name":"Thomas", "hobbies":[]</code></p>
+
+                    <pre style="width:16cm; margin-left: 5mm;"><code class="javascript">db.personen.aggregate([
+ {$unwind: "$hobbies"}
+])</code></pre>
+
+<p class="fragment small" style="width: 40cm;">Ergebnis:<br><code>
+{ "_id" : 1, "name" : "Franka", "hobbies" : "Yoga" }<br>
+{ "_id" : 1, "name" : "Franka", "hobbies" : "Geige" }<br>
+{ "_id" : 2, "name" : "Ulrike", "hobbies" : "Klettern" }<br>
+{ "_id" : 2, "name" : "Ulrike", "hobbies" : "Yoga" }</code></p>
+
+<aside class="notes">Im <code>$unwind</code>-Schritt wird ein Array in seine einzelnen Elemente aufgeteilt. Das Resultat ist, dass jedes Dokument so oft vervielfältigt wird, wie der angegebene Array Elemente hat.​ Bei einem leeren Array, oder falls das gegebene Feld nicht existiert, wird das Dokument übersprungen.​</aside>
+                </section>
+
+                <section>
+                    <h3>Übung: Verschachtelung umkehren</h3>
+
+                    <p class="small" style="width: 40cm;"><code>
+                        { "_id":1, "name":"Franka", "hobbies":["Yoga", "Geige"] }<br>
+                        { "_id":2, "name":"Ulrike", "hobbies":["Klettern","Yoga"]}<br>
+                        { "_id":3, "name":"Thomas", "hobbies":[]</code></p>
+
+                    <pre><code class="javascript">db.personen.aggregate( [
+// ???
+
+
+
+
+] )</code></pre>
+
+<p class="small" style="width: 40cm;">Ergebnis:<br><code>
+{ "_id" : "Yoga", "personen" : ["Franka", "Ulrike"] }<br>
+{ "_id" : "Geige", "personen": ["Franka"] }<br>
+{ "_id" : "Klettern", "personen": ["Ulrike"] }</code></p>
+
+<aside class="notes">Lösung: <code>db.personen.aggregate([
+{<span>$</span>unwind:"<span>$</span>hobbies"},
+{<span>$</span>group: {_id:"<span>$</span>hobbies", personen:{<span>$</span>push:"<span>$</span>name"}}}
+])
+</code></aside>
+                </section>
+
+                <section>
+                    <h3>Joins in MongoDB: <code>$lookup</code></h3>
+                    <p class="small">Personen:<br>
+                        <code>{"_id":1, "name":"Heinz", "wohnort": "Ulm"}</code>
+                        </p>
+
+                        <p class="small">Orte:<br>
+                            <code>{"_id":"Ulm", "einwohner": 126405}<br>
+                                {"_id":"München", "einwohner": 1488202}</code>
+                            </p>
+
+                        <div class="columns">
+                            <div><pre style="width: 9cm;"><code class="javascript">db.personen.aggregate([
+ {$lookup: { 
+  from: "orte",
+  localField: "wohnort",
+  foreignField: "_id",
+  as: "ort"
+  }
+ }
+])</code></pre></div>
+                            <div>
+                                <p class="small">Ergebnis:<br>
+                                <code>{"_id":1, "name":"Heinz",<br>
+&nbsp;"wohnort": "Ulm",<br>
+&nbsp;"ort": [<br>
+&nbsp;&nbsp;{ "_id": "Ulm",<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"einwohner": 126405 }<br>
+&nbsp;]}</code></p>
+                            </div>
+                        </div>
+
+                        <aside class="notes">Für jedes Dokument wird der Wert aus dem "localField" gelesen und diejenigen Dokumente in der anderen Collection (angegeben im "from"-Attribut) gesucht, welchen im "foreignField" ebendiesen Wert haben. Dem Dokument wird ein Array-Attribut (der Name wird im "as"-Attribut definiert) hinzugefügt, welches die gefundenen Dokumente enthält. Wenn nichts gefunden wurde, bleibt der Array leer.​</aside>
+                </section>
+
+                <section>
+                    <img class="noborder" src="img/5/compass_aggregation_pipeline.png" alt="Aggregation Pipeline in MongoDB Compass">
+                    <aside class="notes">In MongoDB Compass lässt sich eine Aggregation-Pipelines mit Mausklicks erstellen und für später abspeichern. Hilfreich ist die Vorschaufunktion auf der rechten Seite, die nach jedem Schritt ein typisches Ausgabedokument anzeigt. Solche Dokumente bilden die Eingabe für den nächsten Schritt.​</aside>
+                </section>
+
+                <section>
+                    <h3>Zusammenfassung</h3>
+                    <ul class="small">
+                        <li><code>collection.aggregate( [ ... ] )</code></li>
+                        <li>Schritte: <code>$match</code>, <code>$sort</code>, <code>$limit</code>, <code>$skip</code>, <code>$project</code>, <code>$unwind</code></li>
+                        <li><code>$group</code>-Schritt, Akkumulatoren</li>
+                        <li><code>$lookup</code>-Schritt</li>
+                    </ul>
+                </section>
+
+			</div>
+		</div>
+
+		<script src="reveal.js/dist/reveal.js"></script>
+		<script src="reveal.js/plugin/markdown/markdown.js"></script>
+		<script src="reveal.js/plugin/highlight/highlight.js"></script>
+		<script src="reveal.js/plugin/zoom/zoom.js"></script>
+		<script src="reveal.js/plugin/math/math.js"></script>
+		<script src="reveal.js/plugin/notes/notes.js"></script>
+		<script src="reveal.js/plugin/search/search.js"></script>
+        <script src="lib/jquery.js"></script>
+        <script src="lib/lodash.js"></script>
+        <script src="lib/backbone.js"></script>
+        <script src="lib/joint.min.js"></script>
+				<script src="lib/deflate.js"></script>
+
+		<script src="src/init_reveal.js"></script>
+
+        <script>
+        if(window.location.search.match( /print-pdf/gi )) {
+                document.getElementById('header').style="display:none";
+                document.getElementById('footer').style="display:none";
+        }
+        </script>
+
+
+	</body>
+</html>
