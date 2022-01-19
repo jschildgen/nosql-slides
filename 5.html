@@ -130,7 +130,7 @@
                         <code>db.personen.aggregate([<br>
                             &nbsp;<b>{$match: { name:/^F/ }}</b>,<br>
                             &nbsp;<span class="gray"><b>{$sort: { geboren:1 }}</b></span>,<br>
-                            &nbsp;<span class="red"><b>{$limit: 2}</b></span>, <span class="yellow"><b>{$skip: 1}</b></span>,<br>
+                            &nbsp;<span class="yellow"><b>{$skip: 1}</b></span>, <span class="red"><b>{$limit: 2}</b></span>,<br>
                             &nbsp;<span class="green"><b>{$project: { name:1, _id:0 }}</b></span> ])</code>
                     </p>
 
@@ -206,8 +206,8 @@ Die im vorherigen Schritt gefilterte Menge an Dokumenten wird nun also nach dem 
                     <pre style="width:16cm; margin-left: 5mm;"><code class="javascript">db.personen.aggregate([
  {$match: {"name": /^F/}},
  {$sort: {"geboren": 1}},
- {$limit: 2},
- {$skip: 1}
+ {$skip: 1},
+ {$limit: 2}
 ])</code></pre>
 
 <aside class="notes">Nach dem Sortieren sollen nur zwei Dokumente ausgegeben werden. Ohne <code>$skip</code>-Schritt wären das die ersten beiden Dokumente, aber hier wird das erste übersprungen. Es kommt also die zweitälteste und drittälteste Person heraus, deren Name mit F beginnt.</aside>
@@ -237,9 +237,9 @@ Die im vorherigen Schritt gefilterte Menge an Dokumenten wird nun also nach dem 
 <div class="poll fragment fade-in-then-out" style="bottom:-280px">
     <h1>Welche alternative Reihenfolge würde zum gleichen Ergebnis führen?</h1>
             <ul>
-                 <li>project, sort, limit, skip, match</li>
-                 <li>match, project, sort, limit, skip</li>
-                 <li data-poll="correct">match, sort, skip, limit, project</li>
+                 <li>project, sort, skip, limit, match</li>
+                 <li>match, project, sort, skip, limit</li>
+                 <li data-poll="correct">match, sort, project, skip, liit</li>
                  <li>sort, skip, limit, project, match</li>
             </ul>
     <h2>https://fraage.de</h2>
