@@ -84,9 +84,9 @@
 								</section>
 
 								<section>
-									<h3>Installation von MongoDB</h3>
+									<h3>Installation von MongoDB (Server)</h3>
 									<p class="small">Über Paketmanager:</p>
-									<pre><code class="sh">sudo apt install mongodb                # Ubuntu
+									<pre><code class="sh">sudo apt install mongodb-org            # Ubuntu (siehe Doku)
 choco install mongodb                   # Windows (Chocolatey)</code></pre>
 
 <div class="fragment">
@@ -116,14 +116,14 @@ choco install mongodb                   # Windows (Chocolatey)</code></pre>
 									<h3>Programme</h3>
 									<h4><code>mongod</code></h4>
 									<p class="small" style="margin-top: -5mm;">MongoDB Server ("MongoDB Deamon")</p>
-									<pre style="width: 103%;"><code class="plaintext">./mongod --port 27017 --dbpath /data/db          # oder einfach ./mongod
+									<pre style="width: 104%;"><code class="plaintext">./mongod --port 27017 --dbpath /data/db          # oder einfach ./mongod
 {..., "msg":"Waiting for connections","attr":{"port":27017,"ssl":"off"}}</code></pre>
 
 <div class="fragment">
-<h4><code>mongo</code></h4>
+<h4><code>mongosh</code> (vormals <code>mongo</code>)</h4>
 									<p class="small" style="margin-top: -5mm;">Mongo Shell (Command-Line-Interface)</p>
-									<pre style="width: 103%;"><code class="plaintext">./mongo
-> db.produkte.insert({"bezeichnung":"Schokoriegel", "preis": 0.89})
+									<pre style="width: 104%;"><code class="plaintext">./mongosh
+test> db.produkte.insertOne({"bezeichnung":"Müsliriegel", "preis": 0.99})
 WriteResult({ "nInserted" : 1 })</code></pre>
 </div>
 
@@ -164,14 +164,15 @@ WriteResult({ "nInserted" : 1 })</code></pre>
 									<div class="fragment">
 									<h4><code>Double</code> (64-bit-Zahl)</h4>
 									<p class="small" style="margin-top: -5mm;">Wird standardmäßig für Zahlen verwendet und kann zu Rundungsfehlern führen.</p>
-									<pre style="width:103%"><code class="javascript">> db.produkte.insert( { _id: 7, preis: 9999999.4999999999 } )
+									<pre style="width:103%"><code class="javascript">> db.produkte.insertOne( { _id: 7, preis: 9999999.4999999999 } )
 > db.produkte.findOne({ _id: 7 })
 { "_id" : 7, "preis": 9999999.5 }</code></pre>
 </div>
 
 <div class="fragment">
 									<h4><code>NumberDecimal</code> (128-bit-Zahl; exakte Genauigkeit)</h4>
-									<pre style="width:103%; margin-top: -5mm;"><code class="javascript">> db.produkte.save({_id: 7, preis: NumberDecimal("9999999.4999999999")})
+									<pre style="width:103%; margin-top: -5mm;"><code class="javascript">> db.produkte.insertOne({_id: 7, 
+                         preis: NumberDecimal("9999999.4999999999")})
 > db.produkte.findOne({ _id: 7 })
 { "_id" : 7, "preis": NumberDecimal("9999999.4999999999") }</code></pre>
 </div>
@@ -274,7 +275,7 @@ WriteResult({ "nInserted" : 1 })</code></pre>
 
 
 									<div class="poll fragment" style="bottom: -500px;" data-fragment-index="1">
-										<h1>Wie viel Prozent mehr oder weniger Platz benötigt die BSON-Repräsentation im Vergleich zum JSON-String?</h1>
+										<h1>Wie viel Prozent mehr oder weniger Platz benötigt in diesem Beispiel die BSON-Repräsentation im Vergleich zum JSON-String?</h1>
 												<ul>
 														<li>5% weniger</li>
 														<li>gleich viel</li>
@@ -375,10 +376,10 @@ WriteResult({ "nInserted" : 1 })</code></pre>
 									<pre style="width: 17cm; margin-left: 0cm; margin-top:-3mm"><code class="javascript">> db
 test</code></pre>
 <pre style="width: 17cm; margin-left: 0cm; margin-top:-3mm;"><code class="javascript">> show dbs
-admin    0.000GB
-config   0.000GB
-local    0.000GB
-webshop  0.000GB</code></pre>
+admin    40.00 KiB
+config   60.00 KiB
+local    72.00 KiB
+webshop   8.00 KiB</code></pre>
 <pre style="width: 17cm; margin-left: 0cm; margin-top:-3mm;"><code class="javascript">> use webshop
 switched to db webshop</code></pre>
 <pre style="width: 17cm; margin-left: 0cm; margin-top:-3mm;"><code class="javascript">> show collections
@@ -458,13 +459,13 @@ Type "it" for more
 <section>
 	<h3>Cursor-Methoden</h3>
 	<ul class="small">
-		<li><code>cursor.pretty()</code> - Besser lesbare Ausgabe</li>
+		<!--<li><code>cursor.pretty()</code> - Besser lesbare Ausgabe</li>-->
 		<li><code>cursor.sort({"feld":1})</code> - Aufsteigend sortieren (absteigend: -1)</li>
 		<li><code>cursor.limit(n)</code></li>
 		<li><code>cursor.skip(offset)</code> - Cursor beginnt erst nach der gegebenen Anzahl</li>
 		<li><code>cursor.count()</code> - Anzahl der vom Cursor referenzierten Dokumente</li>
 	</ul>
-	<pre style="width: 100%;"><code class="javascript">> db.produkte.find().sort({"preis":-1}).limit(1).skip(1).pretty()
+	<pre style="width: 100%;"><code class="javascript">> db.produkte.find().sort({"preis":-1}).limit(1).skip(1)
 {
   "_id" : 18,
   "bezeichnung" : "Müsliriegel",
@@ -478,8 +479,8 @@ Type "it" for more
 <div class="poll fragment" style="bottom: -100px; width: 9.5cm;">
 	<h1>Was findet die auf der Folie gezeigte Query?</h1>
 			<ul>
-				<li>Das billigste Produkte</li>
-				<li>Das zweitbilligste Produkte</li>
+				<li>Das billigste Produkt</li>
+				<li>Das zweitbilligste Produkt</li>
 					<li>Das teuerste Produkt</li>
 					<li data-poll="correct">Das zweitteuerste Produkt</li>
 			</ul>
@@ -578,17 +579,17 @@ Type "it" for more
 </section>
 
 <section>
-	<h3><code>insert</code> - Einfügen von Dokumenten</h3>
+	<h3><code>insertOne</code> - Dokumente einfügen</h3>
 	<p class="small">Das Feld <code>_id</code> ist Pflicht und eindeutig.<br>
 		Fehlt es, wird automatisch eine ObjectId generiert.</p>
-	<pre><code class="javascript">db.kunden.insert({"name":"Ulf", "geboren":1985})</code></pre>
+	<pre><code class="javascript">db.kunden.insertOne({"name":"Ulf", "geboren":1985})</code></pre>
 	<div class="fragment">
 	<p class="small">Manuell setzen geht natürlich auch...</p>
-	<pre><code class="javascript">db.kunden.insert({"_id": 5, "name":"Pia", "geboren":1972})</code></pre>
+	<pre><code class="javascript">db.kunden.insertOne({"_id": 5, "name":"Pia", "geboren":1972})</code></pre>
 </div>
 	<div class="fragment">
 	<p class="small">... solange sie eindeutig ist!</p>
-	<pre><code class="javascript">db.kunden.insert({"_id": 5, "name":"Kai", "geboren":1980})</code></pre>
+	<pre><code class="javascript">db.kunden.insertOne({"_id": 5, "name":"Kai", "geboren":1980})</code></pre>
 	<p style="font-size: 60%;"><i class="red">E11000 duplicate key error collection: webshop.kunden index: _id_ dup key: { _id: 5.0 }</i></p>
 </div>
 <div class="fragment">
@@ -599,20 +600,20 @@ Type "it" for more
 </section>
 
 <section>
-	<h3><code>update</code> - Ersetzen von Dokumenten</h3>
-	<h4>update(kriterium, neues_dokument)</h4>
-	<pre><code class="javascript">db.kunden.update( {"_id":5}, { "geboren": 1973 } )</code></pre>
+	<h3><code>replaceOne</code> - Dokumente ersetzen</h3>
+	<h4>replaceOne(kriterium, neues_dokument)</h4>
+	<pre><code class="javascript">db.kunden.replaceOne( {"_id":5}, { "geboren": 1973 } )</code></pre>
 	<p class="small">Vorher: <code class="javascript">{ "_id" : 5, "name" : "Pia", "geboren" : 1972 }</code>
 	<br>Nachher: <code class="javascript">{ "_id" : 5, "geboren" : 1973 }</code></p>
 	
 	<div class="fragment">
-	<p class="small">Ein Ansatz: Dokument holen, lokal modifizieren, zurückschreiben</p>
+	<p class="small">Ein Update-Ansatz: Dokument holen, lokal modifizieren, zurückschreiben</p>
 	<pre><code class="javascript">kunde = db.kunden.findOne( { "_id":5 });
 kunde.geboren = 1973;
-db.kunden.update({"_id": kunde._id}, kunde);</code></pre>
+db.kunden.replaceOne({"_id": kunde._id}, kunde);</code></pre>
 </div>
 <div class="poll fragment" style="bottom: -180px; width: 9.5cm;">
-	<h1>Warum steht unten nicht {"_id": 5} als Kriterium?</h1>
+	<h1>Warum steht in der letzten Zeile nicht {"_id": 5} als Kriterium?</h1>
 			<ul>
 				<li data-poll="correct">Ginge auch, so ist's aber cooler</li>
 				<li>Das wäre ein ungültiges Kriterium</li>
@@ -624,13 +625,14 @@ db.kunden.update({"_id": kunde._id}, kunde);</code></pre>
 </section>
 
 <section>
-	<h3><code>update</code> - Modifikatoren</h3>
+	<h3><code>updateOne</code> / <code>updateMany</code></h3>
+	<p class="small">Mit Modifikatoren wird bestimmt, inwiefern Dokumente geändert werden sollen.</p>
 	<h4><code>$set</code>, <code>$inc</code>, <code>$rename</code>, <code>$unset</code>, ...</h4>
-	<pre><code class="javascript">db.kunden.update({"_id": 5}, {$set: {geboren:1973}})</code></pre>
+	<pre><code class="javascript">db.kunden.updateOne({"_id": 5}, {$set: {geboren:1973}})</code></pre>
 
 	<div class="fragment" style="margin-top: 10mm;">
 		<h4><code>$push</code>, <code>$addToSet</code>, <code>$pull</code>, ... (für Arrays)</h4>
-		<pre><code class="javascript">db.kunden.update({"_id": 5}, {$push: {telefon:"0176123"}})</code></pre>
+		<pre><code class="javascript">db.kunden.updateOne({"_id": 5}, {$push: {telefon:"0176123"}})</code></pre>
 	</div>
 
 	<aside class="notes">Die hier gezeigten Operatoren werden verwendet, um Teile an Dokumenten an Ort und Stelle zu ändern.<br>Der Unterschied zwischen <code>$push</code> und <code>$addToSet</code> ist, dass <code>$addToSet</code> ein Element nicht dem Array hinzufügt, wenn es schon vorhanden ist.</aside>
@@ -656,21 +658,19 @@ db.kunden.update({"_id": kunde._id}, kunde);</code></pre>
 
 <section>
 	<h3>Upsert</h3>
-	<p class="small">Einfügen, außer es gibt das Dokument schon, dann ändern!</p>
-	<pre><code class="javascript">db.kunden.update({name:"Tina"},
-                 {name:"Tina", geboren:1995},
-                 {upsert:true})</code></pre>
+	<p class="small">Ändern, außer es gibt das Dokument noch gar nicht, dann neu einfügen!</p>
+	<pre><code class="javascript">db.kunden.replaceOne({_id:5},
+                    {name:"Tina", geboren:1995},
+                    {upsert:true})</code></pre>
 
-	<pre><code class="javascript">db.kunden.save({_id:5, name:"Peter", geboren:1995})</code></pre>
-
-  <pre><code class="javascript">db.kunden.findAndModify({query:{name:"Mike"},
+  <pre><code class="javascript">db.kunden.findAndModify({query:{_id:7},
               update:{name:"Mike", geboren:1995},
               upsert:true})</code></pre>
 
 	<div class="poll fragment" style="bottom: -270px; width: 9.5cm;">
 		<h1>Die untere Query liefert null zurück, warum?</h1>
 				<ul>
-					<li data-poll="correct">Weil es noch keinen Mike gibt</li>
+					<li data-poll="correct">Weil es noch keinen Kunden mit _id 7 gibt</li>
 					<li data-poll="correct">Weil new standardmäßig false ist</li>
 					<li data-poll="correct">Weil kein Dokument geändert wurde</li>
 					<li data-poll="correct">Weil ein Dokument eingefügt wurde</li>
@@ -678,17 +678,16 @@ db.kunden.update({"_id": kunde._id}, kunde);</code></pre>
 		<h2></h2>
 	</div>
 
-	<aside class="notes">Es gibt in MongoDB mehrere Möglichkeiten, ein Upsert auszuführen. Entweder über die Option <code>{upsert:true}</code> im optionalen dritten Parameter einer <code>update</code>-, <code>updateOne</code>- oder<code>updateMany</code>-Anfrage. Oder man verwendet <code>save</code>, die Methode funktioniert wie <code>insert</code>, ersetzt das Dokument aber, falls schon eins mit der gegebenen <code>_id</code> existiert.</aside>
+	<aside class="notes">Es gibt in MongoDB mehrere Möglichkeiten, ein Upsert auszuführen. Entweder über die Option <code>{upsert:true}</code> im optionalen dritten Parameter einer <code>replaceOne</code>-, <code>updateOne</code>-, <code>updateMany</code> oder <code>findAndModify</code>-Anfrage. Falls kein Dokument das Suchkriterium erfüllt, wird es eingefügt.</aside>
 </section>
 
 <section>
-	<h3>Multi-Update</h3>
-	<p class="small">Achtung: Alle bisherigen Beispiele updaten immer nur <em>ein</em> Dokument!</p>
+	<h3><code>updateMany</code> - Multi-Update</h3>
+	<p class="small">Alle bisherigen Beispiele updaten immer nur <em>ein</em> Dokument!</p>
 		<h4>Multi-Update:</h4>
-		<pre><code class="javascript">db.kunden.update({}, {$set: {telefon:[]}}, {multi:true})</code></pre>
 		<pre><code class="javascript">db.kunden.updateMany({}, {$set: {telefon:[]}})</code></pre>
 		
-		<aside class="notes"><code>findAndModify</code> und <code>findOneAndUpdate</code> modifizieren immer nur ein Dokument (das erste, was sie finden können). Auch bei <code>update</code> ist das standardmäßig so, dort lässt sich aber die Option <code>{"multi":true}</code> verwenden, um Änderungen auf allen Dokumenten auszuführen, die das Query-Kriterium erfüllen.</aside>
+		<aside class="notes"><code>findAndModify</code> und <code>findOneAndUpdate</code> modifizieren immer nur ein Dokument (das erste, was sie finden können).</aside>
 </section>
 
 <section>

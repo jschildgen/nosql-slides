@@ -93,7 +93,7 @@ mongod --replSet "rs0" --port 27013 --dbpath /data/data3</code></pre>
 
                 <section>
                     <h3><code>rs.status()</code></h3>
-                    <pre><code class="javascript" style="max-height: 30cm;">rs0:PRIMARY> rs.status()
+                    <pre><code class="javascript" style="max-height: 30cm;">rs0 [direct: primary] test> rs.status()
 {
     "set" : "rs0",
     "myState" : 1,     // 1: ich bin PRIMARY, 2: SECONDARY
@@ -115,7 +115,7 @@ mongod --replSet "rs0" --port 27013 --dbpath /data/data3</code></pre>
     //...
 </code></pre>
 
-<aside class="notes">An dem <code>rs0:PRIMARY></code> bzw. <code>rs0:SECONDARY></code> in der Mongo-Shell erkennt man, ob man mit dem Primary oder einem Secondary verbunden ist. <code>rs.status()</code> zeigt die Konfiguration und den Zustand (sind Knoten offline? ...) der Replikation an.</aside>
+<aside class="notes">An dem <code>rs0 [direct: primary]</code> bzw. <code>secondary</code> in der Mongo-Shell erkennt man, ob man mit dem Primary oder einem Secondary verbunden ist. <code>rs.status()</code> zeigt die Konfiguration und den Zustand (sind Knoten offline? ...) der Replikation an.</aside>
                 </section>
 
                 <section>
@@ -156,18 +156,18 @@ mongod --replSet "rs0" --port 27013 --dbpath /data/data3</code></pre>
                 </section>
 
                 <section>
-                    <h3><code>rs.secondaryOk()</code></h3>
-                    <p class="small">Leseoperationen sind auf Secondaries nur mit slaveOk möglich:</p>
-                    <pre><code class="javascript">rs0:SECONDARY> db.kunden.count()</code></pre>
-                    <p class="small"><i class="red">"errmsg" : "not master and slaveOk=false"</i></p>
+                    <h3><code>secondaryOk</code></h3>
+                    <p class="small">Leseoperationen sind auf Secondaries nur mit secondaryOk möglich:</p>
+                    <pre><code class="javascript">rs0 [direct: secondary] test> db.kunden.countDocuments()</code></pre>
+                    <p class="small"><i class="red">"errmsg" : "not primary and secondaryOk=false"</i></p>
                     <div class="fragment">
-                    <h4>rs.secondaryOk()</h4>
+                    <h4>db.getMongo().setReadPref("primaryPreferred")</h4>
                     <p class="small">Keine Garantie für Strong Consistency.<br>Lesen noch nicht synchronisierter Daten möglich.</p>
-                    <pre><code class="plaintext">rs0:SECONDARY> rs.secondaryOk()
-rs0:SECONDARY> db.kunden.count()
+                    <pre><code class="plaintext">> db.getMongo().setReadPref("primaryPreferred")
+rs0 [direct: secondary] test> db.kunden.countDocuments()
 3</code></pre>
 </div>
-<aside class="notes">Mit <code>db.secondaryOk()</code> gibt man das Einverständnis, möglicherweise veraltete Daten zu lesen. Es könnte ja sein, dass Dokumente eingefügt, geändert oder gelöscht wurden, diese Änderung aber noch nicht auf den Secondary, mit dem man gerade verbunden ist, synchronisiert wurde, z. B. wegen Netzwerkverzögerungen.</aside>
+<aside class="notes">Setzt man mit <code>db.getMongo().setReadPref</code> die Read-Preference auf <code>"primaryPreferred"</code>, erteilt man die Erlaubnis, vom Secondary zu lesen (secondaryOk) und somit möglicherweise veraltete Daten zu lesen. Es könnte ja sein, dass Dokumente eingefügt, geändert oder gelöscht wurden, diese Änderung aber noch nicht auf den Secondary, mit dem man gerade verbunden ist, synchronisiert wurde, z. B. wegen Netzwerkverzögerungen.</aside>
                 </section>
 
                
@@ -176,23 +176,23 @@ rs0:SECONDARY> db.kunden.count()
                     <h3>Strong vs. Eventual Consistency</h3>
                     <p class="small">ACID fordert Strong Consistency!</p>
                     <h4>Strong Consistency</h4>
-                    <pre><code class="javascript">rs0:PRIMARY> db.kunden.count()
+                    <pre><code class="javascript">rs0 [direct: primary] test> db.kunden.countDocuments()
 4   // das ist stets der tatsächliche aktuelle Wert!</code></pre>
 
 <div class="fragment">
 <h4>Eventual Consistency (eventual &wedgeq; schließlich)</h4>
-                    <pre><code class="plaintext">rs0:SECONDARY> rs.secondaryOk()
-rs0:SECONDARY> db.kunden.count()
+                    <pre><code class="plaintext">> db.getMongo().setReadPref("primaryPreferred")
+rs0 [direct: secondary] test> db.kunden.countDocuments()
 3
-rs0:SECONDARY> db.kunden.count()
+rs0 [direct: secondary] test> db.kunden.countDocuments()
 3
-rs0:SECONDARY> db.kunden.count()
+rs0 [direct: secondary] test> db.kunden.countDocuments()
 4</code></pre></div>
 <aside class="notes">Eine Möglichkeit, strong Consistency in MongoDB zu erreichen, also in jedem Fall aktuelle Daten zu lesen, ist das Lesen vom Primary. Eine andere Möglichkeit ist mittels eines Write-Concerns möglich (siehe übernächste Folie).</aside>
                 </section>
 
                 <section>
-                    <h3>Read Preference</h3>
+                    <h3>Read-Preference</h3>
                     <pre style="width: 100%;"><code class="python">import pymongo​                                                 # Python
 c = pymongo.MongoClient(host=["mongodb://pc1:27017", 
      "mongodb://pc3:27017", "mongodb://pc3:27017"], 
@@ -201,7 +201,7 @@ db = c.test​
 doc = db.personen.find_one({"name":"Franka"})​
 print(doc)​​</code></pre>
 
-<h4>Read Preference: Mit wem verbinden zum Lesen?</h4>
+<h4>Read-Preference: Mit wem verbinden zum Lesen?</h4>
 <ul style="font-size: 90%; margin-top: -5mm;">
     <li><b><code>PRIMARY</code></b> &Rightarrow; Strong Consistency</li>
     <li><b><code>PRIMARY_PREFERRED</code></b></li>
@@ -211,7 +211,7 @@ print(doc)​​</code></pre>
 </ul>
 
 <div class="poll fragment" style="bottom:-90px" data-fragment-index="4">
-    <h1>Bei welchen Read Preferences haben wir Eventual Consistency?</h1>
+    <h1>Bei welchen Read-Preferences haben wir Eventual Consistency?</h1>
             <ul>
                     <li>SECONDARY</li>
                     <li>SECONDARY, SECONDARY_PREFERRED</li>
@@ -404,12 +404,12 @@ db.personen.insert_one({"name":"Timo"})​</code></pre>
                 <section>
                     <h3>Oplog</h3>
                     <p class="small">Beispiel: Ein neuer Kunde wird eingefügt.</p>
-                    <pre style="width: 100%;"><code class="javascript">rs0:PRIMARY> db.kunden.insertOne( { name: "Peter" } )
+                    <pre style="width: 100%;"><code class="javascript">rs0 [direct: primary] test> db.kunden.insertOne( { name: "Peter" } )
 WriteResult({ "nInserted" : 1 })</code></pre>
 
 <div class="fragment">
                     <h4>Oplog (Capped Collection): <code>oplog.rs</code> in DB <code>local</code></h4>
-                    <pre style="width: 100%;"><code class="javascript">rs0:PRIMARY> db.getSiblingDB("local").oplog.rs.find()
+                    <pre style="width: 100%;"><code class="javascript">rs0 [direct: primary] test> db.getSiblingDB("local").oplog.rs.find()
 {
     "op" : "i",
     "ns" : "test.kunden",
@@ -423,7 +423,7 @@ WriteResult({ "nInserted" : 1 })</code></pre>
 }</code></pre>
 </div>
 
-<div class="poll fragment" style="bottom:-50px" data-fragment-index="4">
+<div class="poll fragment fade-in-then-out" style="bottom:-50px" data-fragment-index="4">
     <h1>Was war nochmal eine Capped Collection?</h1>
             <ul>
                  <li data-poll="correct">Collection mit Maximalgröße</li>
@@ -440,7 +440,7 @@ WriteResult({ "nInserted" : 1 })</code></pre>
                 <section>
                     <h3>Oplog</h3>
                     <p class="small">Beispiel: Zwei Kunden werden gelöscht.</p>
-                    <pre style="width: 100%;"><code class="javascript">rs0:PRIMARY> db.kunden.deleteMany( { name: {$in:["Peter", "Ute"]} } )
+                    <pre style="width: 100%;"><code class="javascript">> db.kunden.deleteMany( { name: {$in:["Peter", "Ute"]} } )
 { "acknowledged" : true, "deletedCount" : 2 }</code></pre>
 
                     <pre style="width: 100%;"><code class="javascript" style="max-height: 25cm;">{
@@ -509,8 +509,8 @@ rs.reconfig(cfg)</code></pre>
 <div class="fragment">
     <h4><code>rs.stepDown()</code></h4>
     <p class="small" style="margin-top: -3mm;"  >Damit wird der Primary nun zum Secondary.</p>
-    <pre><code class="plaintext">rs0:PRIMARY> rs.stepDown()
-rs0:SECONDARY></code></pre>
+    <pre><code class="plaintext">rs0 [direct: primary] test> rs.stepDown()
+rs0 [direct: secondary] test></code></pre>
 </div>
                 </section>
 
@@ -777,20 +777,25 @@ mongos> sh.addShard("s3/localhost:27031")</code></pre>
                 <section>
                     <h3><code>sh.status()</code></h3>
                     <pre><code class="javascript" style="max-height: 30cm;">mongos> sh.status()
---- Sharding Status --- 
 ...
-shards:
-        {  "_id" : "s1",  "host" : "s1/localhost:27011,localhost:27012,localhost:27013",  "state" : 1,  "topologyTime" : Timestamp(1637397183, 2) }
-        {  "_id" : "s2",  "host" : "s2/localhost:27021,localhost:27022,localhost:27023",  "state" : 1,  "topologyTime" : Timestamp(1637397237, 1) }
-        {  "_id" : "s3",  "host" : "s3/localhost:27031,localhost:27032,localhost:27033",  "state" : 1,  "topologyTime" : Timestamp(1637397248, 1) }
+shards: [
+ {  "_id" : "s1",  "host" : "s1/localhost:27011,localhost:27012,localhost:27013",  "state" : 1,  "topologyTime" : Timestamp(1637397183, 2) }
+ {  "_id" : "s2",  "host" : "s2/localhost:27021,localhost:27022,localhost:27023",  "state" : 1,  "topologyTime" : Timestamp(1637397237, 1) }
+ {  "_id" : "s3",  "host" : "s3/localhost:27031,localhost:27032,localhost:27033",  "state" : 1,  "topologyTime" : Timestamp(1637397248, 1) }
 ...
-databases:
-        {  "_id" : "config",  "primary" : "config",  "partitioned" : true }
-                config.system.sessions
-                        shard key: { "_id" : 1 }
-                        unique: false
-                        balancing: true
-                        chunks:</code></pre>
+databases: [
+ {  database: { "_id" : "config",  "primary" : "config",  "partitioned" : true } }
+    collections: {
+        'config.system.sessions': {
+        shardKey: { _id: 1 },
+        unique: false,
+        balancing: true,
+        chunkMetadata: [
+            { shard: 's1', nChunks: 850 },
+            { shard: 's2', nChunks: 87 },
+            { shard: 's3', nChunks: 87 }
+        ],
+        chunks: [</code></pre>
 
                         <aside class="notes"><code>sh.status</code> zeigt, dass wir drei Shards haben und aus welchen Rechnern diese bestehen. Unter <code>databases</code> stehen diejenigen Datenbanken, in denen es geshardete Collections gibt (siehe nächste Folie). Standardmäßig ist nämlich eine Collection nicht geshardet. Alle Dokumente werden dann auf einem "primary" Shard gespeichert.</code></aside>
                 </section>
@@ -805,18 +810,21 @@ mongos> sh.shardCollection("test.produkte", {bezeichnung:1})</code></pre>
                         
                     <pre class="fragment" style="width: 100%;"><code class="javascript">mongos> sh.status()
 ...
-databases:
-{  "_id" : "test",  "partitioned" : true,  "primary" : "s1" }​
-    test.produkte
-            shard key: { "bezeichnung" : 1 }​
-            chunks:​
-                s1    2
-                s3    1​
-                s2    1​
-{ "bezeichnung" : { "$minKey" : 1 } } -->> { "bezeichnung" : "Cello" } on : s2​
-{ "bezeichnung" : "Cello" } -->> { "bezeichnung" : "Klavier" } on : s3
-{ "bezeichnung" : "Klavier" } -->> { "bezeichnung" : "Ukulele" } on : s1
-{ "bezeichnung" : "Ukulele" } -->> { "bezeichnung" : { "$maxKey" : 1 } } on : s1</code></pre>
+{ database: { _id: 'test', primary: 's3', partitioned: true, ... },
+  collections: {
+    'test.produkte': {
+      shardKey: { bezeichnung: 1 }, unique: false, balancing: true,
+      chunkMetadata: [ { shard: 's3', nChunks: 1 } ],
+      chunks: [
+          { min: { bezeichnung: MinKey() }, 
+            max: { bezeichnung: 'Müsliriegel' }, 'on shard': 's1', 'last modified': Timestamp({ t: 2, i: 0 }) },
+          { min: { bezeichnung: 'Müsliriegel' }, 
+            max: { bezeichnung: MaxKey() }, 'on shard': 's3', 'last modified': Timestamp({ t: 2, i: 1 }) }
+        ],
+      tags: []
+    }
+}
+</code></pre>
                             
     <aside class="notes"><code>sh.status</code> zeigt nun, wo welche Dokumente gespeichert werden.</aside>
                                                     
@@ -868,7 +876,7 @@ databases:
                     <h4>Replikation</h4>
                     <ul class="small">
                         <li>Replika-Sets: Primary, Secondary</li>
-                        <li><code>rs.secondaryOk()</code>, Read-Preference</li>
+                        <li>Read-Preference</li>
                         <li>BASE, CAP-Theorem</li>
                         <li>Write Concern, Strong Consistency, Eventual Consistency</li>
                         <li>Oplog</li>
