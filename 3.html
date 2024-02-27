@@ -408,19 +408,19 @@ Ohne die Option <code>numericOrdering: true</code> würden Strings, die aus Zahl
     <h3>Collations: Textvergleiche</h3>
 
 <h4>Suchen</h4>
-    <pre><code class="javascript">db.produkte.find(  // nutzt den Index nicht, findet nichts
+    <pre style="width:98%"><code class="javascript">db.produkte.find(  // nutzt den Index nicht, findet nichts
  {bezeichnung:"Spulmaschinentabs"})</code></pre>
 
- <pre><code class="javascript">db.produkte.find(  // nutzt den Index, findet Spülmaschinentabs
+ <pre style="width:98%"><code class="javascript">db.produkte.find(  // nutzt den Index, findet Spülmaschinentabs
  {bezeichnung:"Spulmaschinentabs"})
  .collation( { locale:"de", strength:1 } )</code></pre>
 
  <h4>Sortieren</h4>
- <pre><code class="javascript">db.produkte.find().collation( { locale:"de", strength:1 } )
+ <pre style="width:98%"><code class="javascript">db.produkte.find().collation( { locale:"de", strength:1 } )
  .sort({bezeichnung:1}).limit(5)             // nutzt den Index</code></pre>
 
  <h4>Default-Collation für eine Collection</h4>
-    <pre><code class="javascript">db.createCollection("produkte", {collation: { ... } )</code></pre>
+    <pre style="width:98%"><code class="javascript">db.createCollection("produkte", {collation: { ... } )</code></pre>
     <aside class="notes">Beim Suchen und Sortieren muss die Collation mit angegeben werden. Man kann aber eine Default-Collation für eine Collection festgelegen. Sie gilt dann für alle Indexe und Anfragen auf dieser Collection.</aside>
 </section>
 

@@ -43,6 +43,7 @@ export default class Keyboard {
 		this.shortcuts['Shift + &#8592;/&#8593/&#8594;/&#8595;']      = 'Jump to first/last slide';
 		this.shortcuts['B  ,  .']                       = 'Pause';
 		this.shortcuts['F']                             = 'Fullscreen';
+		this.shortcuts['G']                             = 'Jump to slide';
 		this.shortcuts['ESC, O']                        = 'Slide overview';
 
 	}
@@ -296,7 +297,7 @@ export default class Keyboard {
 			// L, RIGHT
 			else if( keyCode === 76 || keyCode === 39 ) {
 				if( event.shiftKey ) {
-					this.Reveal.slide( Number.MAX_VALUE );
+					this.Reveal.slide( this.Reveal.getHorizontalSlides().length - 1 );
 				}
 				else if( !this.Reveal.overview.isActive() && useLinearMode ) {
 					this.Reveal.next({skipFragments: event.altKey});
@@ -335,7 +336,7 @@ export default class Keyboard {
 			}
 			// END
 			else if( keyCode === 35 ) {
-				this.Reveal.slide( Number.MAX_VALUE );
+				this.Reveal.slide( this.Reveal.getHorizontalSlides().length - 1 );
 			}
 			// SPACE
 			else if( keyCode === 32 ) {
@@ -361,6 +362,12 @@ export default class Keyboard {
 			else if( keyCode === 65 ) {
 				if ( config.autoSlideStoppable ) {
 					this.Reveal.toggleAutoSlide( autoSlideWasPaused );
+				}
+			}
+			// G
+			else if( keyCode === 71 ) {
+				if ( config.jumpToSlide ) {
+					this.Reveal.toggleJumpToSlide();
 				}
 			}
 			else {
