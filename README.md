@@ -1,4 +1,4 @@
-# mdc-slides
+# nosql-slides
 
 Lecture slides for NoSQL Databases.
 
