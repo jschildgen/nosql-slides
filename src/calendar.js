@@ -5,6 +5,15 @@
  */
  
 var CalendarPlugin = (function(){
+
+	var color_codes = {
+		"green" : "rgba(66, 169, 170, 0.99)",
+		"yellow" : "#ffcb63",
+		"orange" : "#ffaa63",
+		"gray" : "#797d9a",
+		"red" : "#ff6363",
+		"blue" : "#5473b9"
+	}
     
 	return {
 		init: function() {        
@@ -15,17 +24,19 @@ var CalendarPlugin = (function(){
 									case "en": monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]; 
 														 weekdays = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"];
 													break;
-									default: monthNames = ["Januar", "Februar", "März", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"]; 
+									default: monthNames = ["Januar", "Februar", "MÃ¤rz", "April", "Mai", "Juni", "Juli", "August", "September", "Oktober", "November", "Dezember"]; 
 													 weekdays = ["So", "Mo", "Di", "Mi", "Do", "Fr", "Sa"];
 													break;
 								}
+
+								var end_date = item.getAttribute('data-calendar-end');
 
 								var colors = {
 									"red" : item.getAttribute('data-calendar-red') == null ? [] : item.getAttribute('data-calendar-red').split(","),
 									"yellow" : item.getAttribute('data-calendar-yellow') == null ? [] : item.getAttribute('data-calendar-yellow').split(","),
 									"green" : item.getAttribute('data-calendar-green') == null ? [] : item.getAttribute('data-calendar-green').split(","),
-									"blue" : item.getAttribute('data-calendar-blue') == null ? [] : item.getAttribute('data-calendar-blue').split(","),
 									"orange" : item.getAttribute('data-calendar-orange') == null ? [] : item.getAttribute('data-calendar-orange').split(","),
+									"blue" : item.getAttribute('data-calendar-blue') == null ? [] : item.getAttribute('data-calendar-blue').split(","),
 									"gray" : item.getAttribute('data-calendar-gray') == null ? [] : item.getAttribute('data-calendar-gray').split(",")
 								}
 								var monthName = monthNames[date.getMonth()];
@@ -60,14 +71,26 @@ var CalendarPlugin = (function(){
 									}
 
 									var classinfo = "";
+									var first_color = null;
 									for(color in colors) {
 										if(colors[color].indexOf(""+newDate.getDate()) > -1) {
-											classinfo = ' class="sl-block-content '+color+'"';
+											if(classinfo == "") {
+												classinfo = ' class="sl-block-content '+color+'"';
+												first_color = color;
+											} else {
+												classinfo += ' style="background-image: -webkit-linear-gradient(126deg, '+color_codes[color]+' 50%, '+color_codes[first_color]+' 50%);"';
+											}
+											
 										}
 									}
 									html += '<td'+classinfo+'>';
 									html += newDate.getDate();
 									html += '</td>';
+
+									if(newDate.getDate() == end_date) {
+										html += '</tr>';
+										break;
+									}
 									
 									if(newDate.getDay() == 5) {  // Friday
 										html += '</tr>';

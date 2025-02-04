@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>NoSQL-Datenbanken - Übungsblatt 1</title>
+    <title>NoSQL-Datenbanken - Challenge 1</title>
     <link rel="stylesheet" href="../exercises/exercises.css">
     <link href="../lib/fontawesome.all.min.css" rel="stylesheet">
 </head>
@@ -12,18 +12,60 @@
     <header>
         <div>
         <div>
-            <b>NoSQL-Datenbanken - WS 2021/22</b><br>
+            <b>NoSQL-Datenbanken - WS 2024/25</b><br>
             Prof. Dr.-Ing. Johannes Schildgen<br>
             johannes.schildgen@oth-regensburg.de<br>
-            <b>Übungsblatt 1 (2021-10-11)</b>
+            <b>Challenge 1, Deadline: 11.11.2024 23:59 Uhr</b>
         </div>
-        <div><img src="../img/oth.png" style="border:0; height:50px"></div>
+        <div><img src="../img/oth.png" style="border:0; height:45px"></div>
     </div>
     <hr>
     </header>
 <section style="padding-top: 2.5cm">
-    <h1>Aufgabe 1: </h1>
-    <p></p>
+    <h1>Challenge 1: Lokales Bewertungsportal (25P)</h1>
+    <p>Entwickeln Sie eine Web-Anwendung unter Verwendung einer MongoDB-Datenbank. Ziel ist es, dass Benutzer die Anwendung im Browser aufrufen können, um Informationen und Bewertungen zu Orten wie Restaurants, Bars, Freizeitanlagen und zu bekommen. Die Benutzer müssen sich nicht registrieren, jeder kann Bewertungen schreiben. Die Orte von Interesse werden nicht über die Web-Anwendung hinzugefügt und bearbeitet, das können Sie direkt in der MongoDB-Shell oder in MongoDB Compass erledigen.</p>
+    <h3>Allgemeines:</h3>
+    <ul>
+        <li>Verwenden Sie als Datenbank MongoDB und kein weiteres anderes DBMS.</li>
+        <li>Die Programmiersprachen und Technologien zur Web-Entwicklung können Sie frei wählen: Node.js, Python (Flask, ...), Java (Spring Boot, ...), PHP, ...</li>
+        <li>Arbeiten Sie lokal auf Ihren PCs und deployen Sie von Zeit zu Zeit Ihre Anwendung auf dem Server, der Ihrem Zweierteam bereitgestellt wird.</li>
+        <li>Die IP-Adresse, der SSH-Benutzername und das Passwort für den Server wird Ihnen per E-Mail zugeschickt. Sie können das Passwort mittels <code>passwd</code> ändern.</li>
+        <li>Das Server-Betriebssystem ist Ubuntu 24.04.1 LTS. Ihr Benutzer hat sudo-Rechte, sodass Sie sich alle Pakete, die Sie benötigen, mittels <code>apt</code> installieren können.</li>
+        <li>Verwenden Sie MongoDB im Standalone-Modus (keine Replikation, kein Sharding) und die Standard-Einstellungen.</li>
+    </ul>
+
+    <h3>Datenmodell</h3>
+    <ul>
+        <li>Sie benötigen nur eine einzige Collection.</li>
+        <li>Überlegen Sie sich ein Datenmodell, um die Orte von Interesse (Venues) zu speichern.</li>
+        <li>Wichtige Attribute sind eine Bezeichnung, Beschreibung und Typ (Restaurant, ...). Gerne können Sie weitere Attribute hinzufügen.</li>
+        <li>Speichern Sie die Bewertungen zu einem Ort in einem Array-Attribut.</li>
+    </ul>
+    <p>Auf der nächsten Seite befinden sich die Anforderungen.</p>
+
+    <div style="height:5cm"></div>
+
+    <h3 style="page-break-inside:avoid; padding-top: 3cm">Allgemeine Anforderungen (je 1P)</h3>
+    <ol style="margin-top:-2mm">
+        <li><b>GitLab</b>: Setzen Sie das OTH GitLab ein, um Ihren Code zu verwalten. Arbeiten Sie mit zwei Benutzern an diesem Repository, sodass ersichtlich ist, wer welche Features implementiert hat. Fügen Sie Prof. Schildgen zum Repository als Reporter hinzu.</li>
+        <li><b>GitLab README</b>: Schreiben Sie eine ausführliche README für Ihr Projekt, die Ihr Projekt beschreibt (Features der Web-Anwendung, verwendete Technologien, Projektstruktur) und die mindestens einen Screenshot, Systemanforderungen und Schritte zur Installation und zur Einrichtung der Datenbank beinhaltet.</li>
+        <li><b>Beispieldaten</b>: Legen Sie eine json-Datei mit Beispieldaten in Ihr GitLab-Repository und beschreiben Sie in der GitLab-README, wie diese Datei mittels <code>mongoimport</code> in die Datenbank importiert werden kann.</li>
+        <li><b>Sicherheit</b>: Richten Sie für Ihre MongoDB-Instanz auf dem Server entweder eine Benutzername/Passwort-Authentifikation ein oder sorgen Sie dafür, dass von außen nicht auf die Datenbank zugegriffen werden kann.</li>
+        <li><b>Port 80</b>: Die Web-Anwendung soll rund um die Uhr auf Ihrem Server auf Port 80 laufen. Wenn erforderlich, können Sie den Port mittels <code>iptables</code> auf Port 80 umleiten.</li>
+    </ol>
+    <h3>Funktionelle Anforderungen der Web-Anwendung (je 2P)</h3>
+    <ol start="6" style="margin-top:-2mm">
+        <li><b>Startseite</b>: Auf der Startseite Ihrer Anwendung sollen 5 zufällige Venues gezeigt werden.</li>
+        <li><b>Anzahl der Venues</b>: Auf der Startseite soll die Gesamtanzahl der Venues stehen.</li>
+        <li><b>Kategorienauswahl</b>: Auf der Startseite sollen alle in der Collection verwendeten Typen von Venues (Restaurant, Bar, ...) stehen. Ein Klick darauf zeigt 3 Venues aus dieser Kategorie an, sortiert nach Object-ID.</li>
+        <li><b>Pagination</b>: In der Kategorie-Ansicht sollen die Benutzer zu den einzelnen Seiten (vorherige 1 2 3 4 ... nächste) navigieren können, um sich die anderen jeweils bis zu drei Venues anzeigen zu lassen.
+        <li><b>Suche</b>: Auf der Startseite und in den Kategorien-Ansicht soll eine Suchleiste zu sehen sein. Diese soll mittels eines regulären Ausdrucks diejenigen Orte finden, deren Bezeichnung den eingegebenen Suchausdruck beinhaltet (und in der entsprechenden Kategorie sein). Verwenden Sie <code>$options: "i"</code>, damit nicht zwischen Groß- und Kleinschreibung unterschieden wird.</li>
+        <li><b>Detailansicht</b>: Ein Klick auf ein Venue zeigt die Detailansicht an. Hier sollen alle Informationen zum Venue angezeigt werden.</li>
+        <li><b>Bewertung schreiben</b>: In der Detailansicht soll ein Formular zum Schreiben einer Bewertung zu sehen sein. Der Benutzer soll eine Bewertung (1-5 Sterne) abgeben können. Optional kann der Benutzer einen Kommentar und seinen Namen eingeben.</li>
+        <li><b>Bewertungen anzeigen</b>: In der Detailansicht sollen alle Bewertungen zu sehen sein, sortiert nach dem Datum der Bewertung (neueste zuerst). Die Anzahl der Bewertungen und die Durchschnittsbewertung müssen Sie in dieser Version Ihrer Anwendung noch nicht anzeigen.</li>
+        <li><b>Bewertung bearbeiten und löschen</b>: Benutzer sollen Ihre eigenen Bewertungen bearbeiten und löschen können. Arbeiten Sie mit Sessions und/oder Cookies, um zu ermitteln, welche Bewertungen vom Benutzer geschrieben wurden.</li>
+        <li><b>Bilder in GridFS</b>: Ein Venue kann optional ein Bild haben. Dieses Bild soll in GridFS gespeichert werden und mindestens auf der Detailseite der Venues angezeigt werden.</li>
+    </ol>
 </section>
 
     

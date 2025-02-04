@@ -21,13 +21,14 @@ Reveal.initialize({
  dependencies: [
     { src: 'src/sql.js', async: true },
     { src: 'src/clone.js', async: true },
+    { src: 'src/metadata.js', async: true },
     { src: 'src/calendar.js', async: true },
     { src: 'src/erd.js' },
     { src: 'src/hide-from.js' },
     { src: 'plugins/plantuml.js' },
     { src: 'plugins/jump.js', async: true },
     { src: 'plugins/badges.js' },
-    { src: 'plugins/sampler.js' },
+    { src: 'plugins/sampler.js', async: true },
     { src: 'poll/poll.js', async: true }
 ]
 });

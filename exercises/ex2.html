@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>NoSQL-Datenbanken - Challenge 2</title>
+    <link rel="stylesheet" href="../exercises/exercises.css">
+    <link href="../lib/fontawesome.all.min.css" rel="stylesheet">
+</head>
+<body>
+    <header>
+        <div>
+        <div>
+            <b>NoSQL-Datenbanken - WS 2024/25</b><br>
+            Prof. Dr.-Ing. Johannes Schildgen<br>
+            johannes.schildgen@oth-regensburg.de<br>
+            <b>Challenge 2, Deadline: 09.12.2024 23:59 Uhr</b>
+        </div>
+        <div><img src="../img/oth.png" style="border:0; height:45px"></div>
+    </div>
+    <hr>
+    </header>
+<section style="padding-top: 2.5cm">
+    <h1>Challenge 2: Erweiterungen für Ihr lokales Bewertungsportal (25P)</h1>
+    <p>In dieser Challenge geht es darum, Ihr Bewertungsportal von Challenge 1 um weitere Features zu erweitern.</p>
+
+    <h3><!--style="page-break-inside:avoid; padding-top: 3cm"-->Allgemeine Anforderungen (je 1P)</h3>
+    <ol style="margin-top:-2mm">
+        <li><b>Name</b>: Falls noch nicht geschehen, geben Sie Ihrem Bewertungsportal einen ansprechenden Namen.</li>
+        <li><b>Indexe</b>: Erstellen Sie Indexe, um typische Anfragen, die Ihre Anwendung an die Datenbank stellt (außer für die Suchfunktion, das kommt weiter unten in dieser Challenge), so performant zu verarbeiten, dass kein Collection-Scan durchgeführt werden muss.</li>
+        <li><b>Koordinaten</b>: Speichern Sie zu möglichst vielen Ihrer in der Datenbank befindlichen Venues die Geo-Koordinaten. Sie finden diese Koordinaten beispielsweise, wenn Sie bei Google Maps einen Rechtsklick auf die rote Markierung auf der Karte machen. Achten Sie darauf, dass auch Ihr Beispieldatensatz im GitLab die Geo-Koordinaten enthält.</li>
+        <li><b>Tracking</b>: Protokollieren Sie alle über die Suchfunktion und über die Such-API durchgeführten Volltext- und Umkreissuchen (siehe Anforderungen weiter unten) in einer Capped Collection, um später Analysen über das Nutzerverhalten durchzuführen. Speichern Sie den aktuellen Zeitstempel, den eingegebenen Suchstring, die Standort-/Meter-Angabe, die Anzahl der gefundenen Venues und die IP-Adresse des Benutzers. Das Anlegen der Capped Collection sollte in der GitLab-README dokumentiert oder Teil eines Installations- oder Update-Skriptes sein.</li>
+        <li><b>Explain Plan / Profiling</b>: Untersuchen Sie die Unterschiede in der Ausführung und Performance von Anfragen auf die View (Anforderung 14) im Vergleich zur materialisierten Speicherung der Durchschnittsbewertung (Anforderung 15).</li>
+    </ol>
+    <div style="height:7cm"></div>
+    <h3 style="page-break-inside:avoid; padding-top: 3cm">Funktionelle Anforderungen der Web-Anwendung (je 2P)</h3>
+    <ol start="6" style="margin-top:-2mm">
+        <li><b>Volltextsuche</b>: Verwenden Sie einen text-Index, um Ihre Suche nach Venues auf eine mächtige und effiziente Volltextsuche umzustellen.</li>
+        <li><b>Sortieren der Suchergebnisse</b>: Standardmäßig sollen Suchergebnisse nach der Relevanz bzgl. des eingegebenen Such-Strings sortiert werden. Der Benutzer soll aber auch die Möglichkeit bekommen, die Ergebnisse stattdessen alphabetisch nach der Bezeichnung oder nach dem Typ zu sortieren.</li>
+        <li><b>Umkreissuche</b>: Erweitern Sie Ihre Suchfunktion um optionale Felder, um eine Umkreissuche zu ermöglichen: Der eigene Standort und eine Distanz in Metern. Dies findet diejenigen Venues, die innerhalb dieser Distanz zum eigenen Standort liegen. Es soll nun auch möglich sein, nur die Umkreissuche zu verwenden und beim Such-String einfach nichts einzugeben. Der Benutzer gibt den Standort einfach mittels Längengrad/Breitengrad an. Gerne können Sie natürlich optional auch den Standort über die Eingabe von Straße/Hausnummer/Ort oder über einen Klick auf einer Karte abfragen. Dazu müssten Sie dann entsprechende APIs einbinden.</li>
+        <li><b>Standort merken</b>: Der Standort soll in einem Cookie oder in der Session gespeichert werden, damit man ihn nicht immer wieder erneut eingeben muss.</li>
+        <li><b>Sortieren nach Entfernung</b>: Erweitern Sie die Sortierfunktion, die bei der Suchfunktion angeboten wird, um die Möglichkeit, die Venues nach Entfernung zum Benutzerstandort zu sortieren.</li>
+        <li><b>Such-API</b>: Wenn die Startseite Ihrer Anwendung mit dem GET-Parameter <code>?mode=api_search</code> aufgerufen wird, soll ein simples JSON mit Suchergebnissen, die zu den Parametern <code>search</code>, <code>lon</code>, <code>lat</code>, <code>distance</code> (alle diese vier Parameter sind optional) passt, wie folgt zurückgeliefert werden:<br><code>{"portal":"IHR_PORTAL_NAME", "results":[{"venue":"BEZEICHNUNG", "url":"http://VOLLSTAENDIGE_URL_ZUM_VENUE"}, ...]}</code>.<br>Beispielhafter API-Aufruf: <code>http://10.127.0.38/?mode=api_search&search=Burger</code></li>
+        <li><b>Suchergebnisse um andere Teams erweitern</b>: Die Server der anderen Teams haben die IP-Adressen 10.127.0.(38 bis 47). Zeigen Sie unter Ihren Suchergebnissen auch Suchergebnisse mit entsprechenden Links und dem Namen des entsprechenden Portals zu den gefundenen Venues in den Portalen der anderen Teams an.</li>
+        <li><b>Suchstatistiken</b>: Schreiben Sie einen Ausdruck mit der Aggregation-Pipeline: Welche 3 Benutzer haben in den letzten 24 Stunden die meisten Suchanfragen gestellt? Nutzer der Such-API zählen ebenfalls dazu. Stellen Sie diese Statistik auf der Startseite oder einer Unterseite Ihres Portals dar.</li>
+        <li><b>Durchschnittsbewertung (View)</b>: Erstellen Sie eine View, die die gleichen Daten wie Ihre Venue-Collection hat, jedoch zusätzlich noch ein Feld, welches die berechnete Durchschnittsbewertung enthält. Ändern Sie Ihre Anwendung an verschiedenen Stellen, damit diese View statt der Collection verwendet wird, um in Suchergebnissen, in der Detailansicht und Co auch die Durchschnittsbewertung anzuzeigen.</li>
+        <li><b>Durchschnittsbewertung (materialisiert)</b>: Speichern Sie in einem Feld in jeder Venue die Durchschnittsbewertung. Sorgen Sie dafür, dass diese mithilfe der Aggregation Pipeline beim Erstellen, Ändern und Löschen von Bewertungen stets aktualisiert wird. Wie entscheiden Sie sich? Soll Ihre Anwendung lieber die View anfragen oder die materialisierte Durchschnittsbewertung in der Collection?</li>
+    </ol>
+</section>
+
+    
+</body>
+</html>
